@@ -1,0 +1,127 @@
+<!doctype html><html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modul 1 - Warna</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="topbar"><div class="container topbar-inner">
+<a class="brand" href="index.html"><span class="logo">01</span><span>Harmoni dan Kontras Warna</span></a>
+<div class="nav-actions"><a class="btn outline" href="index.html">Dashboard</a><button class="btn primary" onclick="setModuleProgress('warna',100)">Tandai selesai</button></div>
+</div></header>
+
+<main class="container">
+<section class="module-header">
+<span class="badge">Kelas X • 4 JP</span>
+<h1>Praktikum Harmoni dan Kontras Warna</h1>
+<p>Siswa membuat palet warna berdasarkan satu warna utama, lalu menguji keterbacaan teks pada latar yang berbeda.</p>
+</section>
+
+<div class="two-col">
+<aside class="sidebar">
+<div class="panel">
+<h3>Tujuan</h3>
+<ul class="list">
+<li>Memahami hue, saturation, dan lightness.</li>
+<li>Membedakan analog, komplementer, dan triadik.</li>
+<li>Memilih warna teks yang mudah dibaca.</li>
+</ul>
+</div>
+<div class="panel">
+<h3>Tugas proyek</h3>
+<p>Buat palet promosi untuk satu produk UMKM. Gunakan lima warna dan jelaskan fungsi masing-masing warna.</p>
+</div>
+</aside>
+
+<section>
+<div class="panel">
+<h2>Simulator palet</h2>
+<div class="controls">
+<div class="control">
+<label>Warna utama <span id="baseHex">#4F46E5</span></label>
+<input id="baseColor" type="color" value="#4f46e5">
+</div>
+<div class="control">
+<label>Jenis harmoni</label>
+<select id="harmony">
+<option value="analog">Analog</option>
+<option value="complement">Komplementer</option>
+<option value="triad">Triadik</option>
+<option value="mono">Monokromatik</option>
+</select>
+</div>
+</div>
+<div id="palette" class="palette" style="margin-top:18px"></div>
+</div>
+
+<div class="panel">
+<h2>Uji keterbacaan</h2>
+<div class="controls">
+<div class="control"><label>Warna latar</label><input id="bgColor" type="color" value="#111827"></div>
+<div class="control"><label>Warna teks</label><input id="textColor" type="color" value="#ffffff"></div>
+</div>
+<div id="contrastPreview" class="preview-card" style="margin-top:16px">
+<h3>Promosi Produk Lokal</h3>
+<p>Desain harus menarik, tetapi informasi tetap harus terbaca dengan cepat.</p>
+</div>
+<div id="contrastResult" class="notice" style="margin-top:14px"></div>
+</div>
+
+<div class="panel">
+<h2>Kuis formatif</h2>
+<div class="quiz-question"><p>1. Harmoni warna yang menggunakan warna bersebelahan pada roda warna disebut...</p>
+<label><input type="radio" name="q1" value="a"> Analog</label>
+<label><input type="radio" name="q1" value="b"> Komplementer</label>
+<label><input type="radio" name="q1" value="c"> Grayscale</label></div>
+<div class="quiz-question"><p>2. Kontras tinggi diperlukan terutama untuk...</p>
+<label><input type="radio" name="q2" value="a"> Menambah jumlah warna</label>
+<label><input type="radio" name="q2" value="b"> Meningkatkan keterbacaan</label>
+<label><input type="radio" name="q2" value="c"> Mengurangi ukuran file</label></div>
+<div class="quiz-question"><p>3. Warna komplementer berada pada posisi...</p>
+<label><input type="radio" name="q3" value="a"> Berdekatan</label>
+<label><input type="radio" name="q3" value="b"> Berlawanan</label>
+<label><input type="radio" name="q3" value="c"> Sama persis</label></div>
+<button class="btn primary" onclick="checkQuiz('warna',{q1:'a',q2:'b',q3:'b'},3)">Periksa jawaban</button>
+<div id="quizScore" class="score-box" style="margin-top:14px">Nilai belum dihitung</div>
+</div>
+</section>
+</div>
+</main>
+<footer class="footer"><div class="container">Modul 1. Dasar warna untuk komunikasi visual.</div></footer>
+<script src="common.js"></script>
+<script>
+function hexToHsl(hex){
+  const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;
+  const max=Math.max(r,g,b),min=Math.min(r,g,b); let h=0,s=0,l=(max+min)/2;
+  if(max!==min){const d=max-min;s=l>.5?d/(2-max-min):d/(max+min);
+    if(max===r) h=(g-b)/d+(g<b?6:0); else if(max===g) h=(b-r)/d+2; else h=(r-g)/d+4; h*=60;
+  } return [h,s*100,l*100];
+}
+function hslToHex(h,s,l){
+  s/=100;l/=100; const c=(1-Math.abs(2*l-1))*s,x=c*(1-Math.abs((h/60)%2-1)),m=l-c/2;let r=0,g=0,b=0;
+  if(h<60){r=c;g=x}else if(h<120){r=x;g=c}else if(h<180){g=c;b=x}else if(h<240){g=x;b=c}else if(h<300){r=x;b=c}else{r=c;b=x}
+  return "#"+[r,g,b].map(v=>Math.round((v+m)*255).toString(16).padStart(2,"0")).join("").toUpperCase();
+}
+function generatePalette(){
+  const base=document.getElementById("baseColor").value;
+  document.getElementById("baseHex").textContent=base.toUpperCase();
+  const [h,s,l]=hexToHsl(base); const mode=document.getElementById("harmony").value; let hs=[];
+  if(mode==="analog") hs=[h-40,h-20,h,h+20,h+40];
+  if(mode==="complement") hs=[h,h+25,h+180,h+205,h+155];
+  if(mode==="triad") hs=[h,h+120,h+240,h+30,h+210];
+  if(mode==="mono") hs=[h,h,h,h,h];
+  const colors=hs.map((hh,i)=>hslToHex((hh+360)%360, mode==="mono"?Math.max(25,s-i*8):s, mode==="mono"?Math.min(85,25+i*14):Math.max(28,Math.min(72,l+(i-2)*7))));
+  document.getElementById("palette").innerHTML=colors.map(c=>`<div class="swatch" style="background:${c}">${c}</div>`).join("");
+}
+function luminance(hex){
+ const c=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));
+ return .2126*c[0]+.7152*c[1]+.0722*c[2];
+}
+function contrast(){
+ const bg=document.getElementById("bgColor").value,tx=document.getElementById("textColor").value;
+ const a=luminance(bg),b=luminance(tx),ratio=(Math.max(a,b)+.05)/(Math.min(a,b)+.05);
+ const p=document.getElementById("contrastPreview");p.style.background=bg;p.style.color=tx;
+ const r=document.getElementById("contrastResult");r.textContent=`Rasio kontras: ${ratio.toFixed(2)} : 1. ${ratio>=4.5?"Baik untuk teks normal.":"Terlalu rendah. Ubah warna teks atau latar."}`;
+ r.className=ratio>=4.5?"notice success":"notice warning";
+}
+["baseColor","harmony"].forEach(id=>document.getElementById(id).addEventListener("input",generatePalette));
+["bgColor","textColor"].forEach(id=>document.getElementById(id).addEventListener("input",contrast));
+generatePalette();contrast();
+</script></body></html>

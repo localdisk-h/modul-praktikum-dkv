@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Laboratorium Praktikum DKV</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a class="brand" href="index.html"><span class="logo">DKV</span><span>Laboratorium Praktikum DKV</span></a>
+    <div class="nav-actions">
+      <button class="btn outline" onclick="resetAllProgress()">Reset progres</button>
+      <a class="btn primary" href="#modul">Mulai belajar</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section class="hero">
+  <div class="container hero-grid">
+    <div>
+      <span class="badge">Paket HTML Offline untuk SMK</span>
+      <h1>Praktikum DKV yang interaktif dan mudah dipahami.</h1>
+      <p>Paket ini berisi lima contoh modul. Siswa dapat belajar melalui simulasi, latihan, tugas proyek, kuis, dan refleksi. Semua modul berjalan langsung di browser tanpa internet dan tanpa server.</p>
+      <div class="inline">
+        <a class="btn primary" href="#modul">Buka daftar modul</a>
+        <a class="btn outline" href="panduan-guru.html">Panduan guru</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="big">5</div>
+      <h2>Modul siap praktik</h2>
+      <p>Warna, tipografi, komposisi, fotografi, dan design brief.</p>
+      <div class="progress"><span style="width:100%"></span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="modul">
+  <div class="container">
+    <h2>Daftar modul praktikum</h2>
+    <p class="section-lead">Setiap modul dapat digunakan untuk pembelajaran mandiri, demonstrasi guru, penugasan kelompok, atau asesmen formatif.</p>
+    <div class="grid cards">
+      <article class="card module-card" data-progress-id="warna">
+        <span class="badge">Modul 1</span>
+        <h3>Harmoni dan Kontras Warna</h3>
+        <p>Membuat palet warna, memahami harmoni, dan menguji keterbacaan teks.</p>
+        <div class="meta"><span>4 JP</span><span>Kelas X</span><span>Individu</span></div>
+        <div class="progress"><span></span></div>
+        <div class="actions"><small>Progres <b class="progress-text">0%</b></small><a class="btn primary" href="modul-1-warna.html">Buka</a></div>
+      </article>
+
+      <article class="card module-card" data-progress-id="tipografi">
+        <span class="badge">Modul 2</span>
+        <h3>Hierarki Tipografi</h3>
+        <p>Mengatur ukuran huruf, spasi, leading, dan struktur informasi visual.</p>
+        <div class="meta"><span>4 JP</span><span>Kelas X</span><span>Individu</span></div>
+        <div class="progress"><span></span></div>
+        <div class="actions"><small>Progres <b class="progress-text">0%</b></small><a class="btn primary" href="modul-2-tipografi.html">Buka</a></div>
+      </article>
+
+      <article class="card module-card" data-progress-id="komposisi">
+        <span class="badge">Modul 3</span>
+        <h3>Komposisi dan Grid</h3>
+        <p>Menyusun elemen desain melalui drag and drop dan grid 12 kolom.</p>
+        <div class="meta"><span>6 JP</span><span>Kelas X</span><span>Kelompok</span></div>
+        <div class="progress"><span></span></div>
+        <div class="actions"><small>Progres <b class="progress-text">0%</b></small><a class="btn primary" href="modul-3-komposisi.html">Buka</a></div>
+      </article>
+
+      <article class="card module-card" data-progress-id="fotografi">
+        <span class="badge">Modul 4</span>
+        <h3>Exposure Triangle</h3>
+        <p>Simulasi ISO, aperture, dan shutter speed untuk memahami pencahayaan.</p>
+        <div class="meta"><span>6 JP</span><span>Kelas X-XI</span><span>Individu</span></div>
+        <div class="progress"><span></span></div>
+        <div class="actions"><small>Progres <b class="progress-text">0%</b></small><a class="btn primary" href="modul-4-fotografi.html">Buka</a></div>
+      </article>
+
+      <article class="card module-card" data-progress-id="brief">
+        <span class="badge">Modul 5</span>
+        <h3>Penyusunan Design Brief</h3>
+        <p>Menyusun brief proyek berdasarkan masalah, audiens, pesan, dan media.</p>
+        <div class="meta"><span>6 JP</span><span>Kelas XI</span><span>Kelompok</span></div>
+        <div class="progress"><span></span></div>
+        <div class="actions"><small>Progres <b class="progress-text">0%</b></small><a class="btn primary" href="modul-5-design-brief.html">Buka</a></div>
+      </article>
+    </div>
+  </div>
+</section>
+</main>
+<footer class="footer"><div class="container">Modul Praktikum DKV SMK. Berjalan secara offline menggunakan HTML, CSS, dan JavaScript.</div></footer>
+<script src="common.js"></script>
+</body>
+</html>

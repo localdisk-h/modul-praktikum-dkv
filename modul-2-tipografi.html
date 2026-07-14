@@ -1,0 +1,72 @@
+<!doctype html><html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modul 2 - Tipografi</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="topbar"><div class="container topbar-inner">
+<a class="brand" href="index.html"><span class="logo">02</span><span>Hierarki Tipografi</span></a>
+<div class="nav-actions"><a class="btn outline" href="index.html">Dashboard</a><button class="btn primary" onclick="setModuleProgress('tipografi',100)">Tandai selesai</button></div>
+</div></header>
+<main class="container">
+<section class="module-header"><span class="badge">Kelas X • 4 JP</span><h1>Praktikum Hierarki Tipografi</h1><p>Siswa mengatur ukuran judul, isi, jarak huruf, dan jarak baris untuk membangun urutan baca yang jelas.</p></section>
+<div class="two-col">
+<aside class="sidebar">
+<div class="panel"><h3>Prinsip utama</h3><ul class="list"><li>Judul harus paling dominan.</li><li>Subjudul membantu pengelompokan.</li><li>Isi harus nyaman dibaca.</li><li>Jangan memakai terlalu banyak jenis font.</li></ul></div>
+<div class="panel"><h3>Tugas</h3><p>Buat desain pengumuman kegiatan sekolah dengan tiga tingkat hierarki. Gunakan maksimal dua keluarga font.</p></div>
+</aside>
+<section>
+<div class="panel">
+<h2>Pengaturan tipografi</h2>
+<div class="controls">
+<div class="control"><label>Teks judul</label><input id="titleText" type="text" value="Pameran Karya DKV"></div>
+<div class="control"><label>Ukuran judul <span id="titleSizeVal">54 px</span></label><input id="titleSize" type="range" min="28" max="90" value="54"></div>
+<div class="control"><label>Ukuran isi <span id="bodySizeVal">18 px</span></label><input id="bodySize" type="range" min="12" max="28" value="18"></div>
+<div class="control"><label>Jarak huruf <span id="letterVal">0 px</span></label><input id="letterSpace" type="range" min="-2" max="12" value="0"></div>
+<div class="control"><label>Jarak baris <span id="lineVal">1.6</span></label><input id="lineHeight" type="range" min="10" max="24" value="16"></div>
+<div class="control"><label>Perataan</label><select id="align"><option value="left">Kiri</option><option value="center">Tengah</option><option value="right">Kanan</option></select></div>
+</div>
+</div>
+<div class="panel">
+<h2>Pratinjau</h2>
+<div class="type-preview" id="typePreview">
+<h1 id="previewTitle">Pameran Karya DKV</h1>
+<h2>Kreativitas, proses, dan solusi visual</h2>
+<p>Datang dan lihat karya terbaik siswa. Acara menampilkan ilustrasi, fotografi, desain kemasan, video, dan motion graphic.</p>
+<p><strong>Sabtu, 22 Agustus 2026. Aula sekolah. Pukul 08.00 sampai 14.00.</strong></p>
+</div>
+</div>
+<div class="panel">
+<h2>Kuis formatif</h2>
+<div class="quiz-question"><p>1. Fungsi utama hierarki tipografi adalah...</p>
+<label><input type="radio" name="q1" value="a"> Menentukan urutan baca</label>
+<label><input type="radio" name="q1" value="b"> Memperbesar ukuran file</label>
+<label><input type="radio" name="q1" value="c"> Menghapus warna</label></div>
+<div class="quiz-question"><p>2. Leading adalah...</p>
+<label><input type="radio" name="q2" value="a"> Jarak antarbaris</label>
+<label><input type="radio" name="q2" value="b"> Jarak antarhalaman</label>
+<label><input type="radio" name="q2" value="c"> Tebal huruf</label></div>
+<div class="quiz-question"><p>3. Penggunaan font yang aman dalam satu poster adalah...</p>
+<label><input type="radio" name="q3" value="a"> Satu sampai dua keluarga font</label>
+<label><input type="radio" name="q3" value="b"> Tujuh keluarga font</label>
+<label><input type="radio" name="q3" value="c"> Semua font yang tersedia</label></div>
+<button class="btn primary" onclick="checkQuiz('tipografi',{q1:'a',q2:'a',q3:'a'},3)">Periksa jawaban</button>
+<div id="quizScore" class="score-box" style="margin-top:14px">Nilai belum dihitung</div>
+</div>
+</section></div>
+</main>
+<footer class="footer"><div class="container">Modul 2. Tipografi harus mengarahkan mata pembaca.</div></footer>
+<script src="common.js"></script>
+<script>
+const ids=["titleText","titleSize","bodySize","letterSpace","lineHeight","align"];
+function updateType(){
+ const titleSize=+document.getElementById("titleSize").value, body=+document.getElementById("bodySize").value;
+ const ls=+document.getElementById("letterSpace").value, lh=+document.getElementById("lineHeight").value/10;
+ document.getElementById("titleSizeVal").textContent=titleSize+" px";
+ document.getElementById("bodySizeVal").textContent=body+" px";
+ document.getElementById("letterVal").textContent=ls+" px";
+ document.getElementById("lineVal").textContent=lh.toFixed(1);
+ document.getElementById("previewTitle").textContent=document.getElementById("titleText").value;
+ const p=document.getElementById("typePreview");p.style.textAlign=document.getElementById("align").value;p.style.fontSize=body+"px";p.style.lineHeight=lh;p.style.letterSpacing=ls+"px";
+ document.getElementById("previewTitle").style.fontSize=titleSize+"px";
+}
+ids.forEach(id=>document.getElementById(id).addEventListener("input",updateType));updateType();
+</script></body></html>

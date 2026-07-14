@@ -1,0 +1,69 @@
+<!doctype html><html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modul 4 - Fotografi</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="topbar"><div class="container topbar-inner">
+<a class="brand" href="index.html"><span class="logo">04</span><span>Exposure Triangle</span></a>
+<div class="nav-actions"><a class="btn outline" href="index.html">Dashboard</a><button class="btn primary" onclick="setModuleProgress('fotografi',100)">Tandai selesai</button></div>
+</div></header>
+<main class="container">
+<section class="module-header"><span class="badge">Kelas X-XI • 6 JP</span><h1>Simulasi Exposure Triangle</h1><p>Simulator ini membantu siswa memahami hubungan ISO, aperture, shutter speed, kecerahan, noise, ruang tajam, dan blur gerak.</p></section>
+<div class="two-col">
+<aside class="sidebar">
+<div class="panel"><h3>Konsep</h3><ul class="list"><li>ISO tinggi membuat gambar lebih terang dan lebih berisik.</li><li>Aperture besar menghasilkan ruang tajam lebih sempit.</li><li>Shutter lambat membuat gerak lebih mudah blur.</li></ul></div>
+<div class="panel"><h3>Tugas lapangan</h3><p>Setelah mencoba simulator, ambil tiga foto nyata: freeze motion, depth of field sempit, dan foto low light.</p></div>
+</aside>
+<section>
+<div class="panel">
+<div class="controls">
+<div class="control"><label>ISO <span id="isoVal">100</span></label><input id="iso" type="range" min="0" max="5" value="0"></div>
+<div class="control"><label>Aperture <span id="apVal">f/8</span></label><input id="aperture" type="range" min="0" max="5" value="2"></div>
+<div class="control"><label>Shutter speed <span id="shVal">1/125</span></label><input id="shutter" type="range" min="0" max="5" value="2"></div>
+</div>
+<div id="exposurePreview" class="exposure-preview" style="margin-top:18px">
+<div class="exposure-sun"></div><div id="subject" class="exposure-subject"></div>
+</div>
+<div class="exposure-readout">
+<div>Kecerahan<br><span id="brightnessRead">Normal</span></div>
+<div>Noise<br><span id="noiseRead">Rendah</span></div>
+<div>Efek visual<br><span id="effectRead">Seimbang</span></div>
+</div>
+</div>
+<div class="panel">
+<h2>Kuis formatif</h2>
+<div class="quiz-question"><p>1. Untuk membekukan gerak cepat, gunakan...</p>
+<label><input type="radio" name="q1" value="a"> Shutter lebih cepat</label>
+<label><input type="radio" name="q1" value="b"> Shutter lebih lambat</label>
+<label><input type="radio" name="q1" value="c"> ISO selalu 100</label></div>
+<div class="quiz-question"><p>2. Aperture f/1.8 cenderung menghasilkan...</p>
+<label><input type="radio" name="q2" value="a"> Ruang tajam sempit</label>
+<label><input type="radio" name="q2" value="b"> Ruang tajam sangat luas</label>
+<label><input type="radio" name="q2" value="c"> Warna hitam putih</label></div>
+<div class="quiz-question"><p>3. ISO tinggi dapat menimbulkan...</p>
+<label><input type="radio" name="q3" value="a"> Noise</label>
+<label><input type="radio" name="q3" value="b"> Grid</label>
+<label><input type="radio" name="q3" value="c"> Kerning</label></div>
+<button class="btn primary" onclick="checkQuiz('fotografi',{q1:'a',q2:'a',q3:'a'},3)">Periksa jawaban</button>
+<div id="quizScore" class="score-box" style="margin-top:14px">Nilai belum dihitung</div>
+</div>
+</section></div>
+</main>
+<footer class="footer"><div class="container">Modul 4. Gunakan simulator sebelum praktik menggunakan kamera.</div></footer>
+<script src="common.js"></script>
+<script>
+const isos=[100,200,400,800,1600,3200], aps=["f/16","f/11","f/8","f/5.6","f/2.8","f/1.8"], shutters=["1/1000","1/500","1/125","1/60","1/15","1 s"];
+function updateExposure(){
+ const i=+iso.value,a=+aperture.value,s=+shutter.value;
+ isoVal.textContent=isos[i];apVal.textContent=aps[a];shVal.textContent=shutters[s];
+ const exposure=(i+a+s)-6;
+ const bright=Math.max(.28,Math.min(1.55,1+exposure*.14));
+ const blur=Math.max(0,(s-2)*1.5); const dof=Math.max(0,(a-2)*.7);
+ exposurePreview.style.filter=`brightness(${bright})`;
+ subject.style.filter=`blur(${blur}px)`;
+ subject.style.transform=`scale(${1+dof*.02})`;
+ brightnessRead.textContent=exposure<-1?"Gelap":exposure>1?"Terlalu terang":"Normal";
+ noiseRead.textContent=i<2?"Rendah":i<4?"Sedang":"Tinggi";
+ effectRead.textContent=s>3?"Motion blur":a>3?"Depth of field sempit":s<2?"Freeze motion":"Seimbang";
+}
+["iso","aperture","shutter"].forEach(id=>document.getElementById(id).addEventListener("input",updateExposure));updateExposure();
+</script></body></html>

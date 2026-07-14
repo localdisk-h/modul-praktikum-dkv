@@ -1,0 +1,67 @@
+<!doctype html><html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modul 3 - Komposisi</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="topbar"><div class="container topbar-inner">
+<a class="brand" href="index.html"><span class="logo">03</span><span>Komposisi dan Grid</span></a>
+<div class="nav-actions"><a class="btn outline" href="index.html">Dashboard</a><button class="btn primary" onclick="setModuleProgress('komposisi',100)">Tandai selesai</button></div>
+</div></header>
+<main class="container">
+<section class="module-header"><span class="badge">Kelas X • 6 JP</span><h1>Praktikum Komposisi dan Grid</h1><p>Siswa menyusun elemen poster pada bidang kerja. Semua elemen dapat dipindahkan menggunakan mouse atau layar sentuh.</p></section>
+<div class="two-col">
+<aside class="sidebar">
+<div class="panel"><h3>Instruksi</h3><ol class="list"><li>Aktifkan grid.</li><li>Pindahkan judul, gambar, informasi, dan tombol.</li><li>Buat satu focal point.</li><li>Jaga margin aman.</li><li>Uji komposisi tanpa grid.</li></ol></div>
+<div class="panel"><h3>Tantangan</h3><p>Buat poster promosi jurusan DKV. Pastikan judul terbaca pertama, gambar menjadi daya tarik, lalu informasi acara terbaca setelahnya.</p></div>
+</aside>
+<section>
+<div class="panel">
+<div class="inline" style="justify-content:space-between">
+<h2 style="margin:0">Bidang kerja</h2>
+<div>
+<button class="btn outline" onclick="toggleGrid()">Tampilkan grid</button>
+<button class="btn danger" onclick="resetLayout()">Reset</button>
+</div>
+</div>
+<div id="workspace" class="workspace" style="margin-top:16px;height:520px">
+<div id="gridOverlay" class="grid-toggle"></div>
+<div class="drag-item" data-x="35" data-y="35" style="left:35px;top:35px;background:#111827;color:#fff;font-size:32px">OPEN HOUSE DKV</div>
+<div class="drag-item" data-x="60" data-y="150" style="left:60px;top:150px;background:#f97316;color:#fff;width:180px;height:210px;display:grid;place-items:center">GAMBAR UTAMA</div>
+<div class="drag-item" data-x="300" data-y="160" style="left:300px;top:160px;background:#fff;color:#111827;border:1px solid #cbd5e1;width:240px">Sabtu, 22 Agustus 2026<br>Aula SMK<br>08.00 sampai 14.00</div>
+<div class="drag-item" data-x="330" data-y="320" style="left:330px;top:320px;background:#4f46e5;color:#fff">DAFTAR SEKARANG</div>
+</div>
+<div class="notice" style="margin-top:14px">Tip: komposisi yang baik memiliki urutan baca yang jelas, keseimbangan visual, dan ruang kosong yang cukup.</div>
+</div>
+<div class="panel">
+<h2>Checklist evaluasi</h2>
+<div class="checklist">
+<label><input type="checkbox"> Judul paling dominan.</label>
+<label><input type="checkbox"> Elemen tidak menempel pada tepi bidang.</label>
+<label><input type="checkbox"> Informasi penting mudah ditemukan.</label>
+<label><input type="checkbox"> Warna memiliki kontras yang cukup.</label>
+<label><input type="checkbox"> Ruang kosong digunakan secara sadar.</label>
+</div>
+<button class="btn primary" onclick="setModuleProgress('komposisi',100);alert('Praktikum ditandai selesai.')">Simpan penyelesaian</button>
+</div>
+</section></div>
+</main>
+<footer class="footer"><div class="container">Modul 3. Grid membantu keteraturan, tetapi keputusan desain tetap harus sadar.</div></footer>
+<script src="common.js"></script>
+<script>
+let gridOn=false;
+function toggleGrid(){gridOn=!gridOn;document.getElementById("gridOverlay").style.display=gridOn?"block":"none"}
+function resetLayout(){
+ const pos=[[35,35],[60,150],[300,160],[330,320]];
+ document.querySelectorAll(".drag-item").forEach((el,i)=>{el.style.left=pos[i][0]+"px";el.style.top=pos[i][1]+"px";});
+}
+document.querySelectorAll(".drag-item").forEach(el=>{
+ let active=false,offsetX=0,offsetY=0;
+ el.addEventListener("pointerdown",e=>{active=true;el.setPointerCapture(e.pointerId);const r=el.getBoundingClientRect();offsetX=e.clientX-r.left;offsetY=e.clientY-r.top});
+ el.addEventListener("pointermove",e=>{
+  if(!active)return;const w=document.getElementById("workspace").getBoundingClientRect();let x=e.clientX-w.left-offsetX,y=e.clientY-w.top-offsetY;
+  x=Math.max(0,Math.min(x,w.width-el.offsetWidth));y=Math.max(0,Math.min(y,w.height-el.offsetHeight));
+  if(gridOn){const g=w.width/12;x=Math.round(x/g)*g;y=Math.round(y/24)*24}
+  el.style.left=x+"px";el.style.top=y+"px";
+ });
+ el.addEventListener("pointerup",()=>active=false);
+});
+</script></body></html>

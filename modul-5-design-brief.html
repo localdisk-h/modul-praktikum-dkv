@@ -1,0 +1,96 @@
+<!doctype html><html lang="id"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Modul 5 - Design Brief</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<header class="topbar"><div class="container topbar-inner">
+<a class="brand" href="index.html"><span class="logo">05</span><span>Penyusunan Design Brief</span></a>
+<div class="nav-actions"><a class="btn outline" href="index.html">Dashboard</a><button class="btn primary" onclick="window.print()">Cetak atau PDF</button></div>
+</div></header>
+<main class="container">
+<section class="module-header"><span class="badge">Kelas XI • 6 JP</span><h1>Praktikum Penyusunan Design Brief</h1><p>Siswa menerjemahkan kebutuhan klien menjadi dokumen kerja yang jelas, terukur, dan dapat digunakan oleh tim desain.</p></section>
+<div class="two-col">
+<aside class="sidebar">
+<div class="panel"><h3>Studi kasus</h3><p>UMKM minuman herbal ingin menarik pembeli usia 17 sampai 30 tahun. Produk akan dipromosikan melalui Instagram dan kemasan botol.</p></div>
+<div class="panel"><h3>Target hasil</h3><p>Satu design brief lengkap, satu arah visual, satu daftar media, dan satu indikator keberhasilan.</p></div>
+</aside>
+<section>
+<div class="panel">
+<h2>Formulir brief</h2>
+<div class="controls">
+<div class="control"><label>Nama proyek</label><input id="project" type="text" value="Kampanye Minuman Herbal"></div>
+<div class="control"><label>Latar belakang masalah</label><textarea id="problem">Produk memiliki kualitas baik, tetapi kemasan dan promosi belum menarik audiens muda.</textarea></div>
+<div class="control"><label>Tujuan komunikasi</label><textarea id="objective">Meningkatkan pengenalan merek dan mendorong pembelian pertama.</textarea></div>
+<div class="control"><label>Target audiens</label><textarea id="audience">Pelajar, mahasiswa, dan pekerja muda usia 17 sampai 30 tahun yang tertarik pada gaya hidup sehat.</textarea></div>
+<div class="control"><label>Pesan utama</label><input id="message" type="text" value="Minuman herbal praktis dengan rasa modern."></div>
+<div class="control"><label>Media utama</label><input id="media" type="text" value="Kemasan botol, feed Instagram, story, dan poster digital."></div>
+<div class="control"><label>Gaya visual</label><input id="style" type="text" value="Segar, bersih, alami, dan modern."></div>
+<div class="control"><label>Batasan</label><textarea id="limits">Warna hijau harus tetap digunakan. Logo lama perlu dipertahankan. Anggaran cetak terbatas.</textarea></div>
+<div class="control"><label>Indikator keberhasilan</label><textarea id="metric">Desain mudah dikenali, informasi produk terbaca, dan mendapat minimal 50 respons calon pembeli dalam simulasi kampanye.</textarea></div>
+</div>
+<div class="inline" style="margin-top:16px">
+<button class="btn primary" onclick="generateBrief()">Buat design brief</button>
+<button class="btn success" onclick="saveBrief()">Simpan progres</button>
+</div>
+</div>
+<div class="panel">
+<h2>Hasil design brief</h2>
+<div id="briefOutput" class="brief-output"></div>
+</div>
+<div class="panel">
+<h2>Checklist validasi</h2>
+<div class="checklist">
+<label><input type="checkbox"> Masalah proyek dijelaskan dengan jelas.</label>
+<label><input type="checkbox"> Target audiens spesifik.</label>
+<label><input type="checkbox"> Pesan utama singkat dan terukur.</label>
+<label><input type="checkbox"> Media sesuai kebiasaan audiens.</label>
+<label><input type="checkbox"> Batasan proyek dicatat.</label>
+<label><input type="checkbox"> Indikator keberhasilan dapat dievaluasi.</label>
+</div>
+</div>
+</section></div>
+</main>
+<footer class="footer"><div class="container">Modul 5. Brief yang buruk menghasilkan revisi tanpa arah.</div></footer>
+<script src="common.js"></script>
+<script>
+function val(id){return document.getElementById(id).value.trim()}
+function generateBrief(){
+ const out=`DESIGN BRIEF
+
+1. Nama Proyek
+${val("project")}
+
+2. Latar Belakang Masalah
+${val("problem")}
+
+3. Tujuan Komunikasi
+${val("objective")}
+
+4. Target Audiens
+${val("audience")}
+
+5. Pesan Utama
+${val("message")}
+
+6. Media
+${val("media")}
+
+7. Arah Visual
+${val("style")}
+
+8. Batasan Proyek
+${val("limits")}
+
+9. Indikator Keberhasilan
+${val("metric")}
+
+10. Output Minimal
+Satu konsep utama, tiga alternatif awal, satu desain final, satu mockup, dan satu presentasi proses.`;
+ document.getElementById("briefOutput").textContent=out;
+ localStorage.setItem("dkv_brief_draft",JSON.stringify(Object.fromEntries(["project","problem","objective","audience","message","media","style","limits","metric"].map(id=>[id,val(id)]))));
+}
+function saveBrief(){generateBrief();setModuleProgress("brief",100);alert("Design brief dan progres tersimpan di browser ini.")}
+document.addEventListener("DOMContentLoaded",()=>{
+ try{const d=JSON.parse(localStorage.getItem("dkv_brief_draft"));if(d)Object.entries(d).forEach(([k,v])=>{if(document.getElementById(k))document.getElementById(k).value=v})}catch(e){}
+ generateBrief();
+});
+</script></body></html>
