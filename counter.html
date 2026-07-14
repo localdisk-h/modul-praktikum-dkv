@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Rep Counter (Push-up/Pull-up)</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+    
+    <style>
+        body { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            font-family: Arial, sans-serif; 
+            background-color: #1e1e1e; 
+            color: white; 
+            margin: 0; 
+            padding: 20px; 
+        }
+        #container { 
+            position: relative; 
+            width: 640px; 
+            height: 480px; 
+            margin-top: 20px;
+        }
+        /* Video disembunyikan karena kita akan menggambar hasil tangkapan di Canvas */
+        video { 
+            display: none; 
+        } 
+        canvas { 
+            position: absolute; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            /* Membalikkan tampilan agar seperti cermin */
+            transform: scaleX(-1); 
+            border-radius: 10px; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5); 
+            background-color: #000;
+        }
+        .ui-box { 
+            text-align: center; 
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            width: 600px;
+        }
+        h1 { margin: 0 0 10px 0; font-size: 24px; }
+        #counter { font-size: 56px; font-weight: bold; color: #4CAF50; margin: 10px 0; }
+        #status { font-size: 20px; color: #FFC107; }
+    </style>
+</head>
+<body>
+
+    <div class="ui-box">
+        <h1>AI Repetisi Counter</h1>
+        <div id="counter">Reps: 0</div>
+        <div id="status">Status Gerakan: Menyiapkan Kamera...</div>
+    </div>
+
+    <div id="container">
+        <video id="video" width="640" height="480" autoplay playsinline></video>
+        <canvas id="canvas" width="640" height="480"></canvas>
+    </div>
+
+    <script>
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const canvasCtx = canvasElement.getContext('2d');
+        const counterElement = document.getElementById('counter');
+        const statusElement = document.getElementById('status');
+
+        let repCount = 0;
+        let stage = null; // Menyimpan status gerakan (UP atau DOWN)
+
+        // Rumus Matematika Menghitung Sudut
+        function hitungSudut(A, B, C) {
+            const radians = Math.atan2(C.y - B.y, C.x - B.x) - Math.atan2(A.y - B.y, A.x - B.x);
+            let angle = Math.abs(radians * 180.0 / Math.PI);
+            if (angle > 180.0) {
+                angle = 360.0 - angle;
+            }
+            return angle;
+        }
+
+        // Fungsi yang dipanggil setiap kali MediaPipe selesai memproses frame
+        function onResults(results) {
+            canvasCtx.save();
+            canvasCtx.clearRect(0, 0, canvasElement.width, canvasElement.height);
+            
+            // Menggambar tangkapan video ke Canvas
+            canvasCtx.drawImage(results.image, 0, 0, canvasElement.width, canvasElement.height);
+
+            // Jika tubuh terdeteksi
+            if (results.poseLandmarks) {
+                // Menggambar garis kerangka tubuh (Rigging)
+                drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {color: '#00FF00', lineWidth: 4});
+                // Menggambar titik sendi (Landmarks)
+                drawLandmarks(canvasCtx, results.poseLandmarks, {color: '#FF0000', lineWidth: 2});
+
+                // Mengambil titik koordinat Lengan Kiri (kamera cermin)
+                // Indeks MediaPipe: Bahu Kiri = 11, Siku Kiri = 13, Pergelangan Kiri = 15
+                const bahu = results.poseLandmarks[11];
+                const siku = results.poseLandmarks[13];
+                const pergelangan = results.poseLandmarks[15];
+
+                // Memastikan ketiga titik terdeteksi
+                if (bahu.visibility > 0.5 && siku.visibility > 0.5 && pergelangan.visibility > 0.5) {
+                    const sudutLengan = hitungSudut(bahu, siku, pergelangan);
+
+                    // --- Logika State Machine Push-up / Pull-up ---
+                    // Lengan terentang lurus (Fase Naik)
+                    if (sudutLengan > 160) {
+                        stage = "up";
+                        statusElement.innerText = "Status Gerakan: LURUS (UP)";
+                    }
+                    // Lengan menekuk (Fase Turun). 
+                    // Jika sebelumnya UP, lalu sekarang menekuk (< 90 derajat), hitung 1 repetisi
+                    if (sudutLengan < 90 && stage === 'up') {
+                        stage = "down";
+                        statusElement.innerText = "Status Gerakan: MENEKUK (DOWN)";
+                        repCount++;
+                        counterElement.innerText = `Reps: ${repCount}`;
+                    }
+                } else {
+                    statusElement.innerText = "Pastikan bahu hingga tangan terlihat di kamera";
+                }
+            }
+            canvasCtx.restore();
+        }
+
+        // Inisialisasi Model MediaPipe Pose
+        const pose = new Pose({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+        }});
+
+        pose.setOptions({
+            modelComplexity: 1, // Keseimbangan antara akurasi dan kecepatan (0 lambat-rendah, 2 akurat-berat)
+            smoothLandmarks: true,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+        pose.onResults(onResults);
+
+        // Inisialisasi dan Menyalakan Kamera
+        const camera = new Camera(videoElement, {
+            onFrame: async () => {
+                await pose.send({image: videoElement});
+            },
+            width: 640,
+            height: 480
+        });
+        camera.start();
+    </script>
+</body>
+</html>

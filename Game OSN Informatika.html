@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OSN Informatika - Diagnostic Game</title>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; --success: #27ae60; --danger: #e74c3c; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; display: flex; justify-content: center; padding: 20px; }
+        #game-container { background: white; width: 100%; max-width: 700px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); overflow: hidden; }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        .stats { display: flex; justify-content: space-around; background: #ecf0f1; padding: 10px; font-weight: bold; }
+        .question-box { padding: 30px; min-height: 250px; }
+        .options { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
+        button { padding: 15px; border: none; border-radius: 8px; background: #eee; cursor: pointer; transition: 0.3s; font-size: 16px; }
+        button:hover { background: #ddd; }
+        button.correct { background: var(--success) !important; color: white; }
+        button.wrong { background: var(--danger) !important; color: white; }
+        .hidden { display: none; }
+        #result-screen { text-align: center; padding: 50px; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div class="header">
+        <h2>Bimbingan OSN Informatika 2026</h2>
+        <small>Simulasi Diagnostik Pertemuan 1</small>
+    </div>
+    
+    <div id="start-screen" class="question-box">
+        <h3>Selamat Datang, Peserta!</h3>
+        <p>Game ini berisi 5 tantangan adaptasi dari soal diagnostik (Logika & Algoritma). Waktu Anda terbatas!</p>
+        <button onclick="startGame()" style="background: var(--accent); color: white; width: 100%;">Mulai Tantangan</button>
+    </div>
+
+    <div id="quiz-screen" class="hidden">
+        <div class="stats">
+            <div>Skor: <span id="score">0</span></div>
+            <div>Soal: <span id="q-count">1</span>/5</div>
+        </div>
+        <div class="question-box">
+            <div id="question-text" style="font-size: 1.1em; margin-bottom: 15px; font-weight: 600;"></div>
+            <pre id="code-block" style="background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto;" class="hidden"></pre>
+            <div class="options" id="options-container"></div>
+        </div>
+    </div>
+
+    <div id="result-screen" class="hidden">
+        <h2>Hasil Akhir</h2>
+        <h1 id="final-score" style="font-size: 4em; color: var(--accent);">0</h1>
+        <p id="feedback"></p>
+        <button onclick="location.reload()">Ulangi Tes</button>
+    </div>
+</div>
+
+<script>
+    // Data soal diambil dari P1 Soal Diagnostik.docx
+    const quizData = [
+        {
+            question: "Jika p = BENAR dan q = SALAH, apa hasil dari (p XOR q)? [Soal A1d]",
+            options: ["BENAR", "SALAH"],
+            correct: 0,
+            isCode: false
+        },
+        {
+            question: "Sederhanakan ekspresi: NOT(p OR (NOT q)) [Soal A2]",
+            options: ["(NOT p) AND q", "(NOT p) OR q", "p AND (NOT q)", "NOT p AND NOT q"],
+            correct: 0,
+            isCode: false
+        },
+        {
+            question: "Berapa banyak rute berbeda dari A ke F pada denah satu arah? [Soal C2]",
+            options: ["1 Rute", "2 Rute", "3 Rute", "4 Rute"],
+            correct: 1, // Berdasarkan logika graf A->B->E->F dan A->B->C->F (tergantung interpretasi gambar)
+            isCode: false
+        },
+        {
+            question: "Apa output dari kode Python berikut? [Soal D1]",
+            code: "hasil = 0\nfor i in range(1, 8):\n    if i % 2 != 0:\n        hasil += i * i\nprint(hasil)",
+            options: ["49", "84", "166", "21"],
+            correct: 1, // 1^2 + 3^2 + 5^2 + 7^2 = 1 + 9 + 25 + 49 = 84
+            isCode: true
+        },
+        {
+            question: "Apa yang dihitung oleh fungsi rekursif f(7) berikut? [Soal D2]",
+            code: "def f(n):\n    if n <= 1: return n\n    return f(n-1) + f(n-2)",
+            options: ["Faktorial", "Bilangan Prima", "Deret Fibonacci", "Pangkat Dua"],
+            correct: 2,
+            isCode: true
+        }
+    ];
+
+    let currentQ = 0;
+    let score = 0;
+
+    function startGame() {
+        document.getElementById('start-screen').classList.add('hidden');
+        document.getElementById('quiz-screen').classList.remove('hidden');
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const q = quizData[currentQ];
+        document.getElementById('question-text').innerText = q.question;
+        document.getElementById('q-count').innerText = currentQ + 1;
+        
+        const codeEl = document.getElementById('code-block');
+        if(q.isCode) {
+            codeEl.innerText = q.code;
+            codeEl.classList.remove('hidden');
+        } else {
+            codeEl.classList.add('hidden');
+        }
+
+        const optionsContainer = document.getElementById('options-container');
+        optionsContainer.innerHTML = '';
+        q.options.forEach((opt, index) => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(index, btn);
+            optionsContainer.appendChild(btn);
+        });
+    }
+
+    function checkAnswer(idx, btn) {
+        const correctIdx = quizData[currentQ].correct;
+        const allBtns = document.querySelectorAll('#options-container button');
+        
+        allBtns.forEach(b => b.disabled = true);
+
+        if(idx === correctIdx) {
+            score += 20; // 5 soal x 20 = 100 poin
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('wrong');
+            allBtns[correctIdx].classList.add('correct');
+        }
+
+        document.getElementById('score').innerText = score;
+
+        setTimeout(() => {
+            currentQ++;
+            if(currentQ < quizData.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }, 1500);
+    }
+
+    function showResult() {
+        document.getElementById('quiz-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        document.getElementById('final-score').innerText = score;
+        
+        let msg = score >= 80 ? "Luar biasa! Kamu siap menghadapi OSN." : "Terus berlatih logika dasarmu!";
+        document.getElementById('feedback').innerText = msg;
+    }
+</script>
+</body>
+</html>
