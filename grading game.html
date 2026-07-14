@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMK DKV - Game Interaktif Color Grading</title>
+    <style>
+        /* Gaya Sederhana untuk Tampilan Modern */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .case-study {
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            background-color: #fffbe8;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        label {
+            font-weight: bold;
+            flex-basis: 120px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            margin: 0 15px;
+        }
+        .value-display {
+            width: 40px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .image-preview {
+            width: 100%;
+            height: 350px;
+            background-image: url('https://picsum.photos/800/600/?random=1'); /* Placeholder image */
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: filter 0.3s ease;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 50px;
+        }
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Game Color Grading DKV 🎬</h1>
+    <p>Terjemahkan *brief* klien di bawah ini menjadi penyesuaian warna yang tepat pada kontrol **Lumetri Color** (Premiere Pro).</p>
+
+    <div id="imagePreview" class="image-preview"></div>
+
+    <div class="case-study">
+        <h3>📄 Studi Kasus (Brief Klien):</h3>
+        <p id="briefText">**Brief:** "Kami ingin suasana video promosi kopi ini terasa **hangat, *vintage*, dan sedikit muram (menghilangkan kecerahan berlebihan)**. Fokus pada warna cokelat dan emas yang kuat."</p>
+    </div>
+
+    <div class="controls">
+        <h3>⚙️ Pengaturan Color Grading (Lumetri Basic Correction):</h3>
+
+        <div class="control-group">
+            <label for="temperature">Temperature (K):</label>
+            <input type="range" id="temperature" min="-100" max="100" value="0" step="5">
+            <span class="value-display" id="tempValue">0</span>
+        </div>
+
+        <div class="control-group">
+            <label for="contrast">Contrast (%):</label>
+            <input type="range" id="contrast" min="-100" max="100" value="0" step="5">
+            <span class="value-display" id="contrastValue">0</span>
+        </div>
+
+        <div class="control-group">
+            <label for="saturation">Saturation (%):</label>
+            <input type="range" id="saturation" min="0" max="200" value="100" step="5">
+            <span class="value-display" id="satValue">100</span>
+        </div>
+
+        <div class="control-group">
+            <label for="highlights">Highlights:</label>
+            <input type="range" id="highlights" min="-100" max="100" value="0" step="5">
+            <span class="value-display" id="highValue">0</span>
+        </div>
+        
+    </div>
+
+    <button id="submitBtn">Periksa Jawaban!</button>
+    
+    <div id="feedback"></div>
+</div>
+
+<script>
+    // --- Logika Game Interaktif (JavaScript) ---
+
+    // 1. Definisikan Elemen DOM
+    const imagePreview = document.getElementById('imagePreview');
+    const briefText = document.getElementById('briefText');
+    const feedbackDiv = document.getElementById('feedback');
+    const submitBtn = document.getElementById('submitBtn');
+    const controls = {
+        temperature: { range: document.getElementById('temperature'), value: document.getElementById('tempValue') },
+        contrast: { range: document.getElementById('contrast'), value: document.getElementById('contrastValue') },
+        saturation: { range: document.getElementById('saturation'), value: document.getElementById('satValue') },
+        highlights: { range: document.getElementById('highlights'), value: document.getElementById('highValue') }
+    };
+
+    // 2. Data Studi Kasus (Jawaban Benar Didefinisikan)
+    const cases = [
+        {
+            brief: "**Brief:** Kami ingin suasana video promosi kopi ini terasa **hangat, *vintage*, dan sedikit muram (menghilangkan kecerahan berlebihan)**. Fokus pada warna cokelat dan emas yang kuat.",
+            // Jawaban Ideal:
+            ideal: { 
+                temperature: 20, // Hangat -> ke arah Kuning/Jingga
+                contrast: 10,   // Perlu sedikit Contrast untuk Vintage
+                saturation: 115,// Warna Kuat -> Sedikit naikkan Saturation
+                highlights: -25 // Muram/Hilangkan kecerahan berlebihan -> Turunkan Highlights
+            },
+            explanation: "Untuk nuansa **hangat** digunakan **Temperature positif** (+20). Untuk kesan *vintage* dan **muram**, sedikit **kontras dinaikkan** (+10) dan **Highlights diturunkan** (-25). **Saturation** dinaikkan (+15) untuk memperkuat warna kopi (cokelat)."
+        },
+        {
+            brief: "**Brief:** Video klip musik genre *Electronic Dance* ini harus terlihat **dingin, futuristik, dan sangat energik**. Warna harus menonjol dan tajam.",
+            // Jawaban Ideal:
+            ideal: { 
+                temperature: -30, // Dingin -> ke arah Biru
+                contrast: 30,     // Energik/Tajam -> Contrast tinggi
+                saturation: 130,  // Warna menonjol -> Saturation tinggi
+                highlights: 0     // Highlights normal
+            },
+            explanation: "Untuk kesan **dingin** dan **futuristik** digunakan **Temperature negatif** (-30). Kesan **energis** dan **tajam** didapat dengan menaikkan **Contrast** (+30) dan **Saturation** (+30) secara signifikan."
+        },
+        // Anda dapat menambahkan lebih banyak kasus di sini
+    ];
+
+    let currentCaseIndex = 0; // Mulai dari kasus pertama
+    let score = 0; // Skor
+
+    // 3. Fungsi untuk Menerapkan Color Grading ke Gambar
+    function applyGrading() {
+        const temp = controls.temperature.range.value;
+        const contrast = controls.contrast.range.value;
+        const saturation = controls.saturation.range.value;
+        const highlights = controls.highlights.range.value;
+
+        // Tampilkan nilai slider
+        controls.temperature.value.textContent = temp;
+        controls.contrast.value.textContent = contrast;
+        controls.saturation.value.textContent = saturation;
+        controls.highlights.value.textContent = highlights;
+
+        // Menerapkan filter CSS (simulasi Color Grading)
+        // Note: Lumetri memiliki kontrol lebih kompleks, ini adalah simulasi sederhana.
+        const filterStyle = `
+            brightness(calc(1 + (${highlights} / 150)))
+            contrast(calc(1 + (${contrast} / 100)))
+            saturate(calc(${saturation} / 100))
+            hue-rotate(0deg) 
+        `;
+        // Simulasi Temperature: Biru/Kuning (belum sempurna, tapi memberikan efek)
+        const temperatureFilter = `sepia(calc(abs(${temp}) / 100)) hue-rotate(calc(${temp} * 0.5deg))`;
+        
+        imagePreview.style.filter = `${filterStyle} ${temperatureFilter}`;
+        imagePreview.style.boxShadow = `0 0 15px rgba(0, 0, 0, 0.5)`; // Tambahkan shadow untuk efek
+    }
+
+    // 4. Fungsi untuk Memuat Studi Kasus
+    function loadCase(index) {
+        const c = cases[index];
+        briefText.innerHTML = c.brief;
+        feedbackDiv.textContent = '';
+        feedbackDiv.className = '';
+        
+        // Reset slider ke nilai default
+        Object.keys(controls).forEach(key => {
+            const control = controls[key];
+            const defaultValue = key === 'saturation' ? 100 : 0;
+            control.range.value = defaultValue;
+            control.value.textContent = defaultValue;
+        });
+
+        applyGrading(); // Terapkan grading awal (default)
+        submitBtn.textContent = 'Periksa Jawaban!';
+    }
+
+    // 5. Fungsi untuk Memeriksa Jawaban
+    function checkAnswer() {
+        const c = cases[currentCaseIndex];
+        const user = {
+            temperature: parseInt(controls.temperature.range.value),
+            contrast: parseInt(controls.contrast.range.value),
+            saturation: parseInt(controls.saturation.range.value),
+            highlights: parseInt(controls.highlights.range.value)
+        };
+        const ideal = c.ideal;
+
+        // Logika Penilaian (Toleransi ±10 untuk nilai range)
+        const tolerance = 15;
+        let correctCount = 0;
+        let incorrectParams = [];
+
+        // Check Temperature: Hangat/Dingin
+        if (Math.abs(user.temperature - ideal.temperature) <= tolerance) {
+            correctCount++;
+        } else {
+            incorrectParams.push('Temperature');
+        }
+
+        // Check Contrast: Tajam/Lembut
+        if (Math.abs(user.contrast - ideal.contrast) <= tolerance) {
+            correctCount++;
+        } else {
+            incorrectParams.push('Contrast');
+        }
+
+        // Check Saturation: Kuat/Pudar
+        if (Math.abs(user.saturation - ideal.saturation) <= tolerance) {
+            correctCount++;
+        } else {
+            incorrectParams.push('Saturation');
+        }
+
+        // Check Highlights: Terang/Muram
+        if (Math.abs(user.highlights - ideal.highlights) <= tolerance) {
+            correctCount++;
+        } else {
+            incorrectParams.push('Highlights');
+        }
+        
+        // --- Output Feedback ---
+        if (correctCount >= 3) { // Dianggap Lulus jika 3 dari 4 parameter tepat
+            feedbackDiv.className = 'correct';
+            feedbackDiv.innerHTML = `**🎉 LUAR BIASA! (${correctCount}/4)** Terjemahanmu sangat akurat.<br> ${c.explanation}`;
+            score++;
+        } else {
+            feedbackDiv.className = 'incorrect';
+            feedbackDiv.innerHTML = `**❌ Belum Tepat! (${correctCount}/4)** Coba tinjau kembali brief.<br>Parameter yang perlu koreksi: ${incorrectParams.join(', ')}.<br><br> ${c.explanation}`;
+        }
+
+        // Siapkan untuk kasus berikutnya
+        currentCaseIndex = (currentCaseIndex + 1) % cases.length;
+        submitBtn.textContent = `Lanjut ke Kasus Berikutnya (${score}/${cases.length})`;
+        submitBtn.onclick = () => loadCase(currentCaseIndex);
+    }
+
+
+    // 6. Inisialisasi dan Event Listeners
+    loadCase(currentCaseIndex);
+
+    // Event listener untuk setiap slider
+    Object.keys(controls).forEach(key => {
+        controls[key].range.addEventListener('input', applyGrading);
+    });
+
+    // Event listener untuk tombol Submit
+    submitBtn.addEventListener('click', checkAnswer);
+
+    // Terapkan grading awal saat halaman dimuat
+    applyGrading();
+
+</script>
+
+</body>
+</html>

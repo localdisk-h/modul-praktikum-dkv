@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMK DKV - Game Interaktif Color Grading V2</title>
+    <style>
+        /* Gaya Sederhana untuk Tampilan Modern */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+        }
+        h1 {
+            color: #007bff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .case-study {
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            background-color: #fffbe8;
+            margin-bottom: 20px;
+        }
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px 0;
+            border-top: 1px solid #eee;
+            margin-top: 15px;
+        }
+        .control-group {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        label {
+            font-weight: bold;
+            flex-basis: 120px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            margin: 0 15px;
+        }
+        .value-display {
+            width: 40px;
+            text-align: right;
+            font-weight: bold;
+        }
+        .image-preview {
+            width: 100%;
+            height: 350px;
+            background-image: url('https://picsum.photos/800/600/?random=1'); /* Placeholder image */
+            background-size: cover;
+            background-position: center;
+            margin-bottom: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            transition: filter 0.3s ease;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        #feedback {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            text-align: center;
+            min-height: 50px;
+        }
+        .correct {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .incorrect {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Game Color Grading DKV 🎬</h1>
+    <p>Terjemahkan *brief* klien di bawah ini menjadi penyesuaian warna yang tepat pada kontrol **Lumetri Color** (Premiere Pro).</p>
+
+    <div id="imagePreview" class="image-preview"></div>
+
+    <div class="case-study">
+        <h3>📄 Studi Kasus (Brief Klien):</h3>
+        <p id="briefText">Loading brief...</p>
+    </div>
+
+    <div class="controls">
+        <h3>⚙️ Pengaturan Color Grading (Lumetri Basic Correction):</h3>
+
+        <div class="control-group">
+            <label for="temperature">Temperature (K):</label>
+            <input type="range" id="temperature" min="-100" max="100" value="0" step="5">
+            <span class="value-display" id="tempValue">0</span>
+        </div>
+
+        <div class="control-group">
+            <label for="contrast">Contrast (%):</label>
+            <input type="range" id="contrast" min="-100" max="100" value="0" step="5">
+            <span class="value-display" id="contrastValue">0</span>
+        </div>
+
+        <div class="control-group">
+            <label for="saturation">Saturation (%):</label>
+            <input type="range" id="saturation" min="0" max="200" value="100" step="5">
+            <span class="value-display" id="satValue">100</span>
+        </div>
+
+        <div class="control-group">
+            <label for="highlights">Highlights:</label>
+            <input type="range" id="highlights" min="-100" max="100" value="0" step="5">
+            <span class="value-display" id="highValue">0</span>
+        </div>
+        
+    </div>
+
+    <button id="submitBtn">Periksa Jawaban!</button>
+    
+    <div id="feedback"></div>
+</div>
+
+<script>
+    // --- Logika Game Interaktif (JavaScript) ---
+
+    // 1. Definisikan Elemen DOM
+    const imagePreview = document.getElementById('imagePreview');
+    const briefText = document.getElementById('briefText');
+    const feedbackDiv = document.getElementById('feedback');
+    const submitBtn = document.getElementById('submitBtn');
+    const controls = {
+        temperature: { range: document.getElementById('temperature'), value: document.getElementById('tempValue') },
+        contrast: { range: document.getElementById('contrast'), value: document.getElementById('contrastValue') },
+        saturation: { range: document.getElementById('saturation'), value: document.getElementById('satValue') },
+        highlights: { range: document.getElementById('highlights'), value: document.getElementById('highValue') }
+    };
+
+    // 2. Data Studi Kasus (5 Kasus Berbeda)
+    const cases = [
+        {
+            brief: "**BRIEF 1 (Kopi Vintage):** Kami ingin suasana video promosi kopi ini terasa **hangat, *vintage*, dan sedikit muram (menghilangkan kecerahan berlebihan)**. Fokus pada warna cokelat dan emas yang kuat.",
+            // JAWABAN: Hangat (+Temp), Muram (-Highlights), Kuat (+Sat, +Cont)
+            ideal: { 
+                temperature: 20, 
+                contrast: 15,   
+                saturation: 115,
+                highlights: -30 
+            },
+            explanation: "Untuk nuansa **hangat** digunakan **Temperature positif** (+20). Untuk kesan *vintage* dan **muram**, sedikit **kontras dinaikkan** (+15) dan **Highlights diturunkan** (-30). **Saturation** dinaikkan (+15) untuk memperkuat warna kopi (cokelat)."
+        },
+        {
+            brief: "**BRIEF 2 (Film Horor):** Adegan ini terjadi di rumah sakit tua. Kami ingin nuansa yang **sangat dingin, suram, gelap (kurangi terang), dan warna harus pudar** untuk menekan emosi ketakutan.",
+            // JAWABAN: Dingin (-Temp), Gelap/Suram (-Highlights, +Cont), Pudar (-Sat)
+            ideal: { 
+                temperature: -40, // Sangat Dingin
+                contrast: 25,     // Kontras naik untuk bayangan gelap (Suram)
+                saturation: 75,   // Pudar
+                highlights: -45   // Gelap / Kurangi terang
+            },
+            explanation: "Kesan **sangat dingin** dicapai dengan **Temperature negatif** (-40). Untuk nuansa **suram** dan **gelap**, **Highlights diturunkan secara drastis** (-45) dan **Contrast** dinaikkan (+25). Warna **pudar** didapat dengan menurunkan **Saturation** (-25)."
+        },
+        {
+            brief: "**BRIEF 3 (Iklan Makanan Cepat Saji):** Video ini harus terlihat **super cerah, bersih, pop-out (keluar dari layar)**. Warna makanan (merah, kuning) harus sangat **mencolok**.",
+            // JAWABAN: Cerah/Bersih (+Highlights), Mencolok (+Sat), Pop-Out (+Cont)
+            ideal: { 
+                temperature: 0,   // Netral (Bersih)
+                contrast: 35,     // Pop-Out (tajam)
+                saturation: 140,  // Sangat Mencolok
+                highlights: 20    // Cerah
+            },
+            explanation: "Untuk **cerah** dan **bersih** biarkan **Temperature netral** dan naikkan **Highlights** (+20). Warna **mencolok** didapat dengan menaikkan **Saturation secara ekstrem** (+40) dan **Contrast** tinggi (+35) untuk kesan *pop-out*."
+        },
+        {
+            brief: "**BRIEF 4 (Dokumenter Alam):** Kami ingin menonjolkan **keaslian warna** dari hutan tropis. Tidak boleh ada *grading* yang berlebihan, hanya perlu sedikit **koreksi kecerahan** dan pastikan warna hijau **lebih hidup**.",
+            // JAWABAN: Asli (Netral), Hidup (+Sat), Koreksi Kecerahan (+Highlights/+Cont)
+            ideal: { 
+                temperature: 5,   // Hampir Netral
+                contrast: 10,     // Sedikit Contrast untuk detail
+                saturation: 110,  // Lebih Hidup, tapi tidak berlebihan
+                highlights: 5     // Sedikit koreksi cerah
+            },
+            explanation: "Kunci adalah **netral** (**Temperature** mendekati 0). Untuk membuat warna **hijau lebih hidup** cukup naikkan **Saturation sedikit** (+10). **Contrast** dan **Highlights** hanya dinaikkan sedikit (+10/+5) untuk koreksi dan detail ringan."
+        },
+        {
+            brief: "**BRIEF 5 (Klip Romantis Senja):** Suasana video harus **super hangat, *dreamy*, dan lembut**. Jangan sampai ada bayangan yang terlalu keras (*harsh*) atau area yang terlalu gelap.",
+            // JAWABAN: Super Hangat (+Temp), Lembut (-Cont), Dreamy (-Highlights)
+            ideal: { 
+                temperature: 45, // Super Hangat
+                contrast: -15,   // Lembut (lawan dari keras)
+                saturation: 100, // Saturation normal/netral
+                highlights: 10   // Terang di area Highlights (tidak terlalu gelap)
+            },
+            explanation: "Kesan **super hangat** didapat dari **Temperature tinggi** (+45). Untuk nuansa **lembut** dan **dreamy** dilakukan **penurunan Contrast** (-15) untuk menghindari bayangan keras. **Highlights** dinaikkan sedikit (+10) untuk menjaga kesan terang dan tidak gelap."
+        }
+    ];
+
+    let currentCaseIndex = 0; // Mulai dari kasus pertama
+    let score = 0; // Skor
+
+    // 3. Fungsi untuk Menerapkan Color Grading ke Gambar
+    function applyGrading() {
+        const temp = controls.temperature.range.value;
+        const contrast = controls.contrast.range.value;
+        const saturation = controls.saturation.range.value;
+        const highlights = controls.highlights.range.value;
+
+        // Tampilkan nilai slider
+        controls.temperature.value.textContent = temp;
+        controls.contrast.value.textContent = contrast;
+        controls.saturation.value.textContent = saturation;
+        controls.highlights.value.textContent = highlights;
+
+        // Menerapkan filter CSS (simulasi Color Grading)
+        // Simulasi dasar Lumetri:
+        const filterStyle = `
+            brightness(calc(1 + (${highlights} / 150)))
+            contrast(calc(1 + (${contrast} / 100)))
+            saturate(calc(${saturation} / 100))
+            hue-rotate(0deg) 
+        `;
+        // Simulasi Temperature: Biru/Kuning 
+        const temperatureFilter = `sepia(calc(abs(${temp}) / 100)) hue-rotate(calc(${temp} * 0.5deg))`;
+        
+        imagePreview.style.filter = `${filterStyle} ${temperatureFilter}`;
+        imagePreview.style.boxShadow = `0 0 15px rgba(0, 0, 0, 0.5)`;
+    }
+
+    // 4. Fungsi untuk Memuat Studi Kasus
+    function loadCase(index) {
+        // Ganti gambar placeholder agar terasa baru di setiap kasus
+        imagePreview.style.backgroundImage = `url('https://picsum.photos/800/600/?random=${Date.now() + index}')`;
+
+        const c = cases[index];
+        briefText.innerHTML = c.brief;
+        feedbackDiv.textContent = '';
+        feedbackDiv.className = '';
+        
+        // Reset slider ke nilai default
+        Object.keys(controls).forEach(key => {
+            const control = controls[key];
+            const defaultValue = key === 'saturation' ? 100 : 0;
+            control.range.value = defaultValue;
+            control.value.textContent = defaultValue;
+        });
+
+        applyGrading(); // Terapkan grading awal (default)
+        submitBtn.textContent = 'Periksa Jawaban!';
+        submitBtn.onclick = checkAnswer; // Reset fungsi klik ke checkAnswer
+    }
+
+    // 5. Fungsi untuk Memeriksa Jawaban
+    function checkAnswer() {
+        const c = cases[currentCaseIndex];
+        const user = {
+            temperature: parseInt(controls.temperature.range.value),
+            contrast: parseInt(controls.contrast.range.value),
+            saturation: parseInt(controls.saturation.range.value),
+            highlights: parseInt(controls.highlights.range.value)
+        };
+        const ideal = c.ideal;
+
+        // Logika Penilaian (Toleransi ±15 untuk nilai range)
+        const tolerance = 15;
+        let correctCount = 0;
+        let incorrectParams = [];
+
+        // Check Temperature: Hangat/Dingin
+        if (Math.abs(user.temperature - ideal.temperature) <= tolerance) {
+            correctCount++;
+        } else {
+            incorrectParams.push('Temperature');
+        }
+
+        // Check Contrast: Tajam/Lembut
+        if (Math.abs(user.contrast - ideal.contrast) <= tolerance) {
+            correctCount++;
+        } else {
+            incorrectParams.push('Contrast');
+        }
+
+        // Check Saturation: Kuat/Pudar
+        if (Math.abs(user.saturation - ideal.saturation) <= tolerance) {
+            correctCount++;
+        } else {
+            incorrectParams.push('Saturation');
+        }
+
+        // Check Highlights: Terang/Muram
+        if (Math.abs(user.highlights - ideal.highlights) <= tolerance) {
+            correctCount++;
+        } else {
+            incorrectParams.push('Highlights');
+        }
+        
+        // --- Output Feedback ---
+        if (correctCount >= 3) { // Dianggap Lulus jika 3 dari 4 parameter tepat
+            feedbackDiv.className = 'correct';
+            feedbackDiv.innerHTML = `**🎉 LUAR BIASA! (${correctCount}/4)** Terjemahan briefmu sangat akurat.<br> **Alasan:** ${c.explanation}`;
+            score++;
+        } else {
+            feedbackDiv.className = 'incorrect';
+            feedbackDiv.innerHTML = `**❌ Belum Tepat! (${correctCount}/4)** Coba tinjau kembali brief dan nilai yang diminta.<br>Parameter yang perlu koreksi: ${incorrectParams.join(', ')}.<br><br> **Alasan Jawaban Ideal:** ${c.explanation}`;
+        }
+
+        // Siapkan untuk kasus berikutnya
+        currentCaseIndex = (currentCaseIndex + 1) % cases.length;
+        
+        if (currentCaseIndex === 0) {
+            // Selesai semua kasus, tampilkan skor total
+            submitBtn.textContent = `SELESAI. Skor Akhir: ${score}/${cases.length} (Ulangi Game)`;
+        } else {
+            submitBtn.textContent = `Lanjut ke Kasus Berikutnya (${currentCaseIndex}/${cases.length})`;
+        }
+
+        // Ganti fungsi klik tombol menjadi loadCase untuk melanjutkan
+        submitBtn.onclick = () => {
+            if (currentCaseIndex === 0) {
+                score = 0; // Reset skor jika mengulang
+            }
+            loadCase(currentCaseIndex);
+        };
+    }
+
+
+    // 6. Inisialisasi dan Event Listeners
+    loadCase(currentCaseIndex);
+
+    // Event listener untuk setiap slider
+    Object.keys(controls).forEach(key => {
+        controls[key].range.addEventListener('input', applyGrading);
+    });
+
+    // Terapkan grading awal saat halaman dimuat
+    applyGrading();
+
+</script>
+
+</body>
+</html>

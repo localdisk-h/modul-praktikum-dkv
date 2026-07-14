@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lensa DKV: Simulasi Fotografer Profesional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0;
+        }
+
+        /* Animasi Transisi */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes shake {
+            10%, 90% { transform: translate3d(-1px, 0, 0); }
+            20%, 80% { transform: translate3d(2px, 0, 0); }
+            30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+            40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-900 to-slate-800">
+
+    <div id="game-container" class="w-full max-w-2xl bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden relative min-h-[600px] flex flex-col">
+        
+        <div class="bg-slate-900 p-4 flex justify-between items-center border-b border-slate-700">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-camera text-blue-500 text-xl"></i>
+                <span class="font-bold text-lg tracking-wide">LENSA DKV PRO</span>
+            </div>
+            <div id="score-board" class="hidden bg-slate-700 px-3 py-1 rounded-full text-sm font-mono text-blue-300">
+                Skor: <span id="current-score">0</span> | Proyek: <span id="q-progress">1/10</span>
+            </div>
+        </div>
+
+        <div id="start-screen" class="flex-1 flex flex-col items-center justify-center p-8 text-center fade-in">
+            <div class="w-24 h-24 bg-blue-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-blue-500/30">
+                <i class="fa-solid fa-play text-4xl text-white ml-2"></i>
+            </div>
+            <h1 class="text-3xl md:text-4xl font-extrabold text-white mb-4">Siap Menjadi Fotografer Profesional?</h1>
+            <p class="text-slate-400 mb-8 text-lg leading-relaxed max-w-md">
+                Hadapi tantangan nyata dari klien, atur komposisi, pencahayaan, hingga proses editing dalam simulasi studi kasus DKV.
+            </p>
+            <button onclick="game.start()" class="group relative px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all hover:shadow-lg hover:shadow-blue-500/40 w-full md:w-auto">
+                <span class="mr-2">Mulai Proyek Pertama</span>
+                <i class="fa-solid fa-arrow-right transition-transform group-hover:translate-x-1"></i>
+            </button>
+            <p class="mt-6 text-xs text-slate-500">Materi: Dasar Fotografi (KD 7.1 - 7.3)</p>
+        </div>
+
+        <div id="game-screen" class="hidden flex-1 flex flex-col p-6 fade-in relative">
+            <div class="mb-6">
+                <span class="text-blue-400 text-xs font-bold uppercase tracking-wider mb-2 block">BRIEF KLIEN / SITUASI</span>
+                <div class="bg-slate-700/50 p-5 rounded-xl border-l-4 border-blue-500">
+                    <p id="scenario-text" class="text-lg text-slate-200 font-medium leading-relaxed">
+                        </p>
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <p id="question-text" class="text-slate-400 text-sm italic mb-4">
+                    </p>
+                
+                <div id="options-container" class="grid grid-cols-1 gap-3">
+                    </div>
+            </div>
+
+            <div id="feedback-overlay" class="hidden absolute inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center p-8 text-center backdrop-blur-sm fade-in">
+                <div id="feedback-icon" class="text-6xl mb-4"></div>
+                <h2 id="feedback-title" class="text-2xl font-bold text-white mb-2"></h2>
+                <p id="feedback-desc" class="text-slate-300 mb-8 leading-relaxed"></p>
+                <button onclick="game.nextQuestion()" class="px-6 py-3 bg-white text-slate-900 font-bold rounded-lg hover:bg-slate-200 transition">
+                    Lanjut ke Proyek Berikutnya
+                </button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center fade-in">
+            <div class="mb-6 relative">
+                <svg class="w-32 h-32 transform -rotate-90">
+                    <circle cx="64" cy="64" r="60" stroke="#1e293b" stroke-width="8" fill="transparent" />
+                    <circle id="progress-ring" cx="64" cy="64" r="60" stroke="#3b82f6" stroke-width="8" fill="transparent" stroke-dasharray="377" stroke-dashoffset="377" class="transition-all duration-1000 ease-out" />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center flex-col">
+                    <span id="final-score" class="text-3xl font-bold text-white">0</span>
+                    <span class="text-xs text-slate-400">POIN</span>
+                </div>
+            </div>
+            
+            <h2 id="result-title" class="text-2xl font-bold text-white mb-2">Judul Hasil</h2>
+            <p id="result-desc" class="text-slate-400 mb-8 max-w-sm mx-auto"></p>
+
+            <div class="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
+                <div class="bg-slate-700 p-3 rounded-lg">
+                    <div class="text-xs text-slate-400">Benar</div>
+                    <div id="total-correct" class="text-xl font-bold text-green-400">0</div>
+                </div>
+                <div class="bg-slate-700 p-3 rounded-lg">
+                    <div class="text-xs text-slate-400">Salah</div>
+                    <div id="total-wrong" class="text-xl font-bold text-red-400">0</div>
+                </div>
+            </div>
+
+            <button onclick="game.restart()" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition w-full md:w-auto">
+                Main Lagi
+            </button>
+        </div>
+
+        <div class="bg-slate-900 p-3 text-center border-t border-slate-700">
+            <p class="text-xs text-slate-600">Modul Interaktif DKV - Dasar Fotografi</p>
+        </div>
+    </div>
+
+    <script>
+        // --- DATABASE SOAL (STUDI KASUS) ---
+        const questions = [
+            {
+                scenario: "Klien Anda adalah pemilik restoran Steak. Mereka ingin foto close-up makanan dengan latar belakang yang buram (blur) agar fokus tertuju penuh pada tekstur daging.",
+                question: "Teknik pengaturan kamera apa yang paling tepat untuk menghasilkan efek 'Bokeh' tersebut?",
+                options: [
+                    "Menggunakan Aperture kecil (f/22)",
+                    "Menggunakan Aperture besar (f/1.8)",
+                    "Meningkatkan Shutter Speed ke 1/1000",
+                    "Menggunakan ISO 6400"
+                ],
+                correct: 1,
+                explanation: "Benar! Aperture besar (angka f kecil, misal f/1.8) menciptakan Depth of Field (DoF) yang sempit, membuat latar belakang menjadi blur (bokeh) dan subjek utama tajam. Ini sesuai dengan KD 7.1 (Pengaturan Pencahayaan/Komposisi)."
+            },
+            {
+                scenario: "Anda sedang memotret acara olahraga lari di sekolah. Objek bergerak sangat cepat. Klien ingin foto yang membekukan gerakan pelari (freeze motion), bukan yang berbayang.",
+                question: "Pengaturan apa yang harus diprioritaskan?",
+                options: [
+                    "Shutter Speed lambat (1/15s)",
+                    "ISO rendah (100)",
+                    "Shutter Speed cepat (1/500s atau lebih)",
+                    "White Balance Tungsten"
+                ],
+                correct: 2,
+                explanation: "Tepat! Shutter speed cepat (High Shutter Speed) digunakan untuk membekukan objek yang bergerak cepat (Freeze Motion). Jika shutter lambat, foto akan motion blur."
+            },
+            {
+                scenario: "Dalam sesi pemotretan landscape pantai saat matahari terbenam, Anda ingin menerapkan komposisi agar letak matahari terlihat estetis dan seimbang, tidak kaku di tengah.",
+                question: "Aturan komposisi dasar apa yang sebaiknya diterapkan?",
+                options: [
+                    "Dead Center",
+                    "Rule of Thirds",
+                    "Fill the Frame",
+                    "Pattern & Rhythm"
+                ],
+                correct: 1,
+                explanation: "Correct! Rule of Thirds membagi frame menjadi 9 bagian. Menempatkan poin of interest (matahari) di titik persimpangan garis membuat foto lebih dinamis dan enak dipandang."
+            },
+            {
+                scenario: "Klien meminta foto produk untuk dicetak pada baliho raksasa di jalan raya. Mereka membutuhkan kualitas tertinggi agar tidak pecah saat diperbesar.",
+                question: "Format file apa yang sebaiknya Anda pilih saat pemotretan?",
+                options: [
+                    "JPEG Basic",
+                    "PNG",
+                    "RAW",
+                    "GIF"
+                ],
+                correct: 2,
+                explanation: "Sangat Tepat! Format RAW menyimpan semua data yang ditangkap sensor tanpa kompresi. Ini memungkinkan pengeditan maksimal dan pembesaran gambar tanpa penurunan kualitas yang signifikan (KD 7.2)."
+            },
+            {
+                scenario: "Anda memotret model di dalam studio. Wajah model terlihat memiliki bayangan yang sangat keras dan gelap di satu sisi (high contrast). Klien ingin pencahayaan yang lebih lembut.",
+                question: "Alat bantu pencahayaan apa yang bisa digunakan untuk melembutkan cahaya?",
+                options: [
+                    "Snoot",
+                    "Honeycomb Grid",
+                    "Softbox",
+                    "Standard Reflector"
+                ],
+                correct: 2,
+                explanation: "Benar. Softbox berfungsi menyebarkan (diffuse) cahaya sehingga transisi antara area terang dan gelap menjadi lebih halus (soft light)."
+            },
+            {
+                scenario: "Saat proses editing di Adobe Photoshop/Lightroom, Anda ingin mengubah warna langit menjadi lebih biru tanpa merusak piksel asli foto, agar bisa dikembalikan jika salah.",
+                question: "Metode kerja apa yang harus diterapkan?",
+                options: [
+                    "Destructive Editing",
+                    "Non-Destructive Editing (Adjustment Layers)",
+                    "Langsung menghapus background",
+                    "Menyimpan file hanya dalam format JPG"
+                ],
+                correct: 1,
+                explanation: "Tepat. Non-Destructive Editing (seperti penggunaan Adjustment Layers) sangat krusial dalam alur kerja DKV (KD 7.3) agar file asli tetap aman dan revisi mudah dilakukan."
+            },
+            {
+                scenario: "Situasi pemotretan outdoor siang hari yang sangat terik. Foto yang dihasilkan terlalu terang (overexposure) meskipun ISO sudah 100 dan Aperture sudah sesuai keinginan.",
+                question: "Apa yang harus dilakukan pada Shutter Speed untuk menyeimbangkan cahaya?",
+                options: [
+                    "Memperlambat Shutter Speed",
+                    "Mempercepat Shutter Speed",
+                    "Mengubah White Balance",
+                    "Mengganti Lensa"
+                ],
+                correct: 1,
+                explanation: "Betul. Jika foto overexposure (terlalu terang), kita perlu mengurangi cahaya yang masuk. Mempercepat Shutter Speed (misal dari 1/100 ke 1/500) akan mengurangi durasi cahaya masuk ke sensor."
+            },
+            {
+                scenario: "Anda memotret di dalam ruangan dengan lampu berwarna kuning (Tungsten). Hasil foto di layar kamera terlihat sangat oranye/kemerahan, tidak natural.",
+                question: "Pengaturan apa yang perlu disesuaikan agar warna putih kembali terlihat putih?",
+                options: [
+                    "ISO",
+                    "Metering Mode",
+                    "Focus Mode",
+                    "White Balance (WB)"
+                ],
+                correct: 3,
+                explanation: "Benar! White Balance berfungsi menyesuaikan suhu warna (color temperature) agar warna pada foto sesuai dengan aslinya, menetralisir bias warna dari sumber cahaya."
+            },
+            {
+                scenario: "Sebagai desainer DKV, Anda diminta membuat poster. Foto utama subjek berada di sebelah kanan, dan area kiri kosong (negative space) akan diisi teks judul.",
+                question: "Ini adalah penerapan prinsip fotografi dalam desain yang disebut?",
+                options: [
+                    "Leading Lines",
+                    "Symmetry",
+                    "Negative Space (Ruang Kosong)",
+                    "Framing"
+                ],
+                correct: 2,
+                explanation: "Tepat. Negative Space bukan area buangan, tapi elemen desain aktif yang memberikan 'ruang napas' dan tempat untuk meletakkan tipografi dalam karya DKV (KD 7.3)."
+            },
+            {
+                scenario: "Proyek selesai. Anda harus menyerahkan file final kepada klien untuk keperluan posting Instagram (Web).",
+                question: "Format dan Color Space apa yang paling standar untuk kebutuhan layar digital/web?",
+                options: [
+                    "TIFF - CMYK",
+                    "JPEG - SRGB",
+                    "RAW - AdobeRGB",
+                    "EPS - Pantone"
+                ],
+                correct: 1,
+                explanation: "Sempurna! Untuk kebutuhan layar (digital/web), format JPEG dengan color space sRGB adalah standar industri karena kompatibel dengan semua browser dan layar HP."
+            }
+        ];
+
+        // --- GAME ENGINE ---
+        const game = {
+            score: 0,
+            currentQuestionIndex: 0,
+            answers: { correct: 0, wrong: 0 },
+            
+            // Elemen DOM
+            elements: {
+                startScreen: document.getElementById('start-screen'),
+                gameScreen: document.getElementById('game-screen'),
+                resultScreen: document.getElementById('result-screen'),
+                scoreBoard: document.getElementById('score-board'),
+                currentScore: document.getElementById('current-score'),
+                qProgress: document.getElementById('q-progress'),
+                scenarioText: document.getElementById('scenario-text'),
+                questionText: document.getElementById('question-text'),
+                optionsContainer: document.getElementById('options-container'),
+                feedbackOverlay: document.getElementById('feedback-overlay'),
+                feedbackTitle: document.getElementById('feedback-title'),
+                feedbackDesc: document.getElementById('feedback-desc'),
+                feedbackIcon: document.getElementById('feedback-icon'),
+                finalScore: document.getElementById('final-score'),
+                resultTitle: document.getElementById('result-title'),
+                resultDesc: document.getElementById('result-desc'),
+                progressRing: document.getElementById('progress-ring'),
+                totalCorrect: document.getElementById('total-correct'),
+                totalWrong: document.getElementById('total-wrong')
+            },
+
+            start: function() {
+                this.score = 0;
+                this.currentQuestionIndex = 0;
+                this.answers = { correct: 0, wrong: 0 };
+                
+                this.elements.startScreen.classList.add('hidden');
+                this.elements.resultScreen.classList.add('hidden');
+                this.elements.gameScreen.classList.remove('hidden');
+                this.elements.scoreBoard.classList.remove('hidden');
+                
+                this.updateStats();
+                this.loadQuestion();
+            },
+
+            loadQuestion: function() {
+                const q = questions[this.currentQuestionIndex];
+                const el = this.elements;
+
+                // Update Progress
+                el.qProgress.innerText = `${this.currentQuestionIndex + 1}/${questions.length}`;
+                
+                // Animasi fade in konten baru
+                el.scenarioText.parentElement.classList.remove('fade-in');
+                void el.scenarioText.parentElement.offsetWidth; // trigger reflow
+                el.scenarioText.parentElement.classList.add('fade-in');
+
+                el.scenarioText.innerText = q.scenario;
+                el.questionText.innerText = "Tindakan: " + q.question;
+                
+                // Render Options
+                el.optionsContainer.innerHTML = '';
+                q.options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full p-4 text-left bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-xl transition-all flex items-center group";
+                    btn.onclick = () => this.checkAnswer(index);
+                    
+                    btn.innerHTML = `
+                        <span class="w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-sm font-bold mr-4 group-hover:bg-blue-500 group-hover:text-white transition-colors">
+                            ${String.fromCharCode(65 + index)}
+                        </span>
+                        <span class="text-slate-200 font-medium">${opt}</span>
+                    `;
+                    el.optionsContainer.appendChild(btn);
+                });
+            },
+
+            checkAnswer: function(selectedIndex) {
+                const q = questions[this.currentQuestionIndex];
+                const isCorrect = selectedIndex === q.correct;
+                
+                if (isCorrect) {
+                    this.score += 10;
+                    this.answers.correct++;
+                    this.showFeedback(true, q.explanation);
+                } else {
+                    this.answers.wrong++;
+                    this.showFeedback(false, q.explanation);
+                }
+                this.updateStats();
+            },
+
+            showFeedback: function(isCorrect, explanation) {
+                const el = this.elements;
+                el.feedbackOverlay.classList.remove('hidden');
+                
+                if (isCorrect) {
+                    el.feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 bounce"></i>';
+                    el.feedbackTitle.innerText = "Kerja Bagus!";
+                    el.feedbackTitle.className = "text-2xl font-bold text-green-400 mb-2";
+                } else {
+                    el.feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500 shake"></i>';
+                    el.feedbackTitle.innerText = "Kurang Tepat";
+                    el.feedbackTitle.className = "text-2xl font-bold text-red-400 mb-2";
+                }
+                el.feedbackDesc.innerText = explanation;
+            },
+
+            nextQuestion: function() {
+                this.elements.feedbackOverlay.classList.add('hidden');
+                this.currentQuestionIndex++;
+
+                if (this.currentQuestionIndex < questions.length) {
+                    this.loadQuestion();
+                } else {
+                    this.endGame();
+                }
+            },
+
+            updateStats: function() {
+                this.elements.currentScore.innerText = this.score;
+            },
+
+            endGame: function() {
+                this.elements.gameScreen.classList.add('hidden');
+                this.elements.scoreBoard.classList.add('hidden');
+                this.elements.resultScreen.classList.remove('hidden');
+
+                const el = this.elements;
+                const percentage = (this.score / (questions.length * 10)) * 100;
+                
+                // Animasi angka skor
+                el.finalScore.innerText = this.score;
+                el.totalCorrect.innerText = this.answers.correct;
+                el.totalWrong.innerText = this.answers.wrong;
+
+                // Animasi Ring Chart
+                const circle = el.progressRing;
+                const radius = circle.r.baseVal.value;
+                const circumference = radius * 2 * Math.PI;
+                const offset = circumference - (percentage / 100) * circumference;
+                
+                circle.style.strokeDashoffset = circumference; // Reset
+                setTimeout(() => {
+                    circle.style.strokeDashoffset = offset;
+                }, 100);
+
+                // Teks Hasil
+                if (percentage >= 80) {
+                    el.resultTitle.innerText = "Fotografer Profesional!";
+                    el.resultTitle.className = "text-2xl font-bold text-blue-400 mb-2";
+                    el.resultDesc.innerText = "Anda memiliki pemahaman teknis dan artistik yang luar biasa. Siap terjun ke industri!";
+                } else if (percentage >= 60) {
+                    el.resultTitle.innerText = "Fotografer Junior";
+                    el.resultTitle.className = "text-2xl font-bold text-yellow-400 mb-2";
+                    el.resultDesc.innerText = "Potensi bagus, namun perlu memperdalam lagi pemahaman teknis pencahayaan dan kamera.";
+                } else {
+                    el.resultTitle.innerText = "Perlu Banyak Latihan";
+                    el.resultTitle.className = "text-2xl font-bold text-red-400 mb-2";
+                    el.resultDesc.innerText = "Jangan menyerah! Pelajari kembali modul dasar fotografi dan coba lagi.";
+                }
+            },
+
+            restart: function() {
+                this.start();
+            }
+        };
+    </script>
+</body>
+</html>

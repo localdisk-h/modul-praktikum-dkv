@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lensa DKV: Master Class</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #e2e8f0; }
+        .fade-in { animation: fadeIn 0.4s ease-out; }
+        .shake { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes shake { 10%, 90% { transform: translate3d(-1px, 0, 0); } 20%, 80% { transform: translate3d(2px, 0, 0); } 30%, 50%, 70% { transform: translate3d(-4px, 0, 0); } 40%, 60% { transform: translate3d(4px, 0, 0); } }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-2 md:p-4 bg-gradient-to-br from-slate-900 to-slate-800">
+
+    <div id="game-container" class="w-full max-w-3xl bg-slate-800 rounded-2xl shadow-2xl border border-slate-700 overflow-hidden relative min-h-[650px] flex flex-col">
+        
+        <div class="bg-slate-900 p-4 flex justify-between items-center border-b border-slate-700 sticky top-0 z-10">
+            <div class="flex items-center space-x-2">
+                <i class="fa-solid fa-aperture text-blue-500 text-xl"></i>
+                <span class="font-bold text-lg tracking-wide hidden md:inline">LENSA DKV MASTER</span>
+                <span class="font-bold text-lg tracking-wide md:hidden">LENSA DKV</span>
+            </div>
+            <div id="score-board" class="hidden bg-slate-700 px-4 py-1 rounded-full text-sm font-mono text-blue-300 border border-slate-600">
+                Score: <span id="current-score" class="text-white font-bold">0</span> | <span id="q-progress">1/10</span>
+            </div>
+        </div>
+
+        <div id="start-screen" class="flex-1 flex flex-col items-center justify-center p-8 text-center fade-in">
+            <div class="w-28 h-28 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-full flex items-center justify-center mb-6 shadow-lg shadow-blue-500/20 animate-pulse">
+                <i class="fa-solid fa-camera-retro text-5xl text-white"></i>
+            </div>
+            <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-4">Ujian Kompetensi<br><span class="text-blue-500">Dasar Fotografi</span></h1>
+            <p class="text-slate-400 mb-8 text-lg leading-relaxed max-w-lg">
+                Sistem akan memilih <b>10 Skenario Acak</b> dari ratusan kasus lapangan. Buktikan kemampuan Anda dalam komposisi, pencahayaan, dan teknis kamera.
+            </p>
+            <button onclick="game.start()" class="px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all hover:scale-105 shadow-xl shadow-blue-900/50">
+                Mulai Simulasi
+            </button>
+            <div class="mt-8 flex space-x-4 text-xs text-slate-500">
+                <span><i class="fa-solid fa-shuffle mr-1"></i> Soal Diacak</span>
+                <span><i class="fa-solid fa-bolt mr-1"></i> Jawaban Diacak</span>
+                <span><i class="fa-solid fa-book mr-1"></i> Kurikulum DKV</span>
+            </div>
+        </div>
+
+        <div id="game-screen" class="hidden flex-1 flex flex-col p-4 md:p-6 fade-in relative overflow-y-auto">
+            <div class="mb-6 bg-slate-700/30 p-5 rounded-xl border border-slate-600/50 relative">
+                <div class="absolute -top-3 left-4 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider">Brief Klien</div>
+                <p id="scenario-text" class="text-lg text-slate-100 font-medium leading-relaxed mt-2">
+                    </p>
+            </div>
+
+            <div class="flex-1">
+                <p id="question-text" class="text-blue-300 text-sm font-semibold mb-4 flex items-start">
+                    <i class="fa-solid fa-circle-question mt-1 mr-2"></i> 
+                    <span></span>
+                </p>
+                
+                <div id="options-container" class="grid grid-cols-1 gap-3 pb-20">
+                    </div>
+            </div>
+
+            <div id="feedback-overlay" class="hidden absolute inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center p-6 text-center backdrop-blur-sm">
+                <div id="feedback-icon" class="text-6xl mb-4"></div>
+                <h2 id="feedback-title" class="text-2xl font-bold text-white mb-2"></h2>
+                <div class="bg-slate-800 p-4 rounded-lg border border-slate-700 max-w-md">
+                    <p class="text-xs text-slate-400 uppercase font-bold mb-1">Penjelasan Ahli:</p>
+                    <p id="feedback-desc" class="text-slate-200 text-sm leading-relaxed"></p>
+                </div>
+                <button onclick="game.nextQuestion()" class="mt-6 px-8 py-3 bg-white text-slate-900 font-bold rounded-lg hover:bg-slate-200 transition w-full max-w-xs">
+                    Lanjut <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <div id="result-screen" class="hidden flex-1 flex flex-col items-center justify-center p-8 text-center fade-in">
+            <div class="mb-6 relative">
+                <svg class="w-40 h-40 transform -rotate-90">
+                    <circle cx="80" cy="80" r="70" stroke="#1e293b" stroke-width="10" fill="transparent" />
+                    <circle id="progress-ring" cx="80" cy="80" r="70" stroke="#3b82f6" stroke-width="10" fill="transparent" stroke-dasharray="440" stroke-dashoffset="440" class="transition-all duration-1000 ease-out" />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center flex-col">
+                    <span id="final-score" class="text-4xl font-extrabold text-white">0</span>
+                    <span class="text-xs text-slate-400 uppercase tracking-widest">Nilai Akhir</span>
+                </div>
+            </div>
+            
+            <h2 id="result-title" class="text-2xl font-bold text-white mb-2"></h2>
+            <p id="result-desc" class="text-slate-400 mb-8 text-sm max-w-sm mx-auto"></p>
+
+            <div class="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
+                <div class="bg-green-900/30 border border-green-800 p-3 rounded-lg">
+                    <div class="text-xs text-green-400 uppercase">Benar</div>
+                    <div id="total-correct" class="text-xl font-bold text-white">0</div>
+                </div>
+                <div class="bg-red-900/30 border border-red-800 p-3 rounded-lg">
+                    <div class="text-xs text-red-400 uppercase">Salah</div>
+                    <div id="total-wrong" class="text-xl font-bold text-white">0</div>
+                </div>
+            </div>
+
+            <button onclick="game.start()" class="px-8 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition w-full md:w-auto shadow-lg">
+                <i class="fa-solid fa-rotate-right mr-2"></i> Coba Paket Soal Baru
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /* DATABASE SOAL (BANK DATA)
+           Format: 
+           {
+               scenario: "Cerita singkat...",
+               question: "Pertanyaan teknis...",
+               options: [
+                   { text: "Jawaban Benar", isCorrect: true },
+                   { text: "Jawaban Salah 1", isCorrect: false },
+                   ...
+               ],
+               explanation: "Penjelasan kenapa jawaban itu benar."
+           }
+           
+           Tips: Anda bisa menambahkan hingga 100+ soal di sini. 
+           Sistem akan otomatis mengacak opsi dan memilih 10 soal saja.
+        */
+        
+        const rawQuestionBank = [
+            // --- KATEGORI: EXPOSURE TRIANGLE (ISO, APERTURE, SHUTTER) ---
+            {
+                scenario: "Anda memotret pertandingan sepak bola di siang hari yang terik. Anda ingin membekukan gerakan pemain yang sedang menendang bola.",
+                question: "Setting shutter speed mana yang paling tepat?",
+                options: [
+                    { text: "1/1000 sec", isCorrect: true },
+                    { text: "1/60 sec", isCorrect: false },
+                    { text: "1/15 sec", isCorrect: false },
+                    { text: "2 sec", isCorrect: false }
+                ],
+                explanation: "Untuk membekukan gerakan cepat (freeze motion) pada olahraga, dibutuhkan shutter speed sangat cepat (minimal 1/500 atau 1/1000)."
+            },
+            {
+                scenario: "Klien meminta foto air terjun di mana airnya terlihat lembut seperti kapas (silky water).",
+                question: "Teknik apa yang harus diterapkan?",
+                options: [
+                    { text: "Long Exposure (Shutter Lambat)", isCorrect: true },
+                    { text: "High Speed Sync", isCorrect: false },
+                    { text: "Aperture f/1.8", isCorrect: false },
+                    { text: "ISO 3200", isCorrect: false }
+                ],
+                explanation: "Efek air lembut didapat dengan Shutter Speed lambat (misal 1 detik atau lebih), yang sering memerlukan tripod."
+            },
+            {
+                scenario: "Anda memotret portrait outdoor. Wajah model gelap karena membelakangi matahari (backlight). Anda tidak membawa flash.",
+                question: "Apa solusi metering yang paling tepat di kamera?",
+                options: [
+                    { text: "Spot Metering pada wajah", isCorrect: true },
+                    { text: "Matrix/Evaluative Metering", isCorrect: false },
+                    { text: "Menurunkan ISO", isCorrect: false },
+                    { text: "Mempercepat Shutter Speed", isCorrect: false }
+                ],
+                explanation: "Spot Metering akan mengukur cahaya hanya pada titik fokus (wajah), mengabaikan background yang terang, sehingga wajah terekspos dengan benar."
+            },
+            {
+                scenario: "Di dalam studio gelap, Anda memotret produk jam tangan. Klien ingin seluruh bagian jam dari depan sampai belakang tajam (fokus merata).",
+                question: "Berapa nilai aperture yang sebaiknya digunakan?",
+                options: [
+                    { text: "f/16 atau f/22", isCorrect: true },
+                    { text: "f/1.8", isCorrect: false },
+                    { text: "f/2.8", isCorrect: false },
+                    { text: "f/5.6", isCorrect: false }
+                ],
+                explanation: "Aperture kecil (angka f besar seperti f/16) memberikan Depth of Field yang luas, membuat seluruh objek tajam."
+            },
+            {
+                scenario: "Anda memotret konser malam hari dengan pencahayaan minim. Lensa Anda hanya bukaan f/3.5. Foto masih gelap.",
+                question: "Langkah terakhir untuk menerangkan foto adalah menaikkan?",
+                options: [
+                    { text: "ISO", isCorrect: true },
+                    { text: "Shutter Speed", isCorrect: false },
+                    { text: "Aperture", isCorrect: false },
+                    { text: "Focal Length", isCorrect: false }
+                ],
+                explanation: "Jika Aperture sudah maksimal dan Shutter Speed tidak bisa diperlambat (agar tidak blur), maka ISO harus dinaikkan (misal ke 1600/3200)."
+            },
+            {
+                scenario: "Foto landscape pegunungan yang Anda potret terlihat memiliki banyak bintik-bintik kasar (noise) di area langit biru.",
+                question: "Kemungkinan besar penyebabnya adalah?",
+                options: [
+                    { text: "ISO terlalu tinggi", isCorrect: true },
+                    { text: "Shutter speed terlalu cepat", isCorrect: false },
+                    { text: "Lensa kotor", isCorrect: false },
+                    { text: "White balance salah", isCorrect: false }
+                ],
+                explanation: "ISO tinggi meningkatkan sensitivitas sensor namun efek sampingnya adalah munculnya digital noise (bintik kasar)."
+            },
+
+            // --- KATEGORI: LENSA & ALAT ---
+            {
+                scenario: "Klien properti meminta Anda memotret interior kamar mandi yang sempit agar terlihat luas.",
+                question: "Lensa jenis apa yang wajib Anda bawa?",
+                options: [
+                    { text: "Wide Angle (10-18mm)", isCorrect: true },
+                    { text: "Telephoto (70-200mm)", isCorrect: false },
+                    { text: "Fixed 50mm", isCorrect: false },
+                    { text: "Macro Lens", isCorrect: false }
+                ],
+                explanation: "Lensa Wide Angle memiliki sudut pandang luas, sangat cocok untuk memotret ruangan sempit agar tertangkap seluruhnya."
+            },
+            {
+                scenario: "Anda diminta memotret detail tekstur serat kain untuk katalog fashion.",
+                question: "Lensa khusus apa yang paling optimal?",
+                options: [
+                    { text: "Lensa Macro", isCorrect: true },
+                    { text: "Lensa Fisheye", isCorrect: false },
+                    { text: "Lensa Kit", isCorrect: false },
+                    { text: "Lensa Tele", isCorrect: false }
+                ],
+                explanation: "Lensa Macro dirancang untuk fokus jarak sangat dekat dengan rasio pembesaran 1:1, ideal untuk detail tekstur."
+            },
+            {
+                scenario: "Saat memotret satwa liar (burung) dari jarak jauh, Anda tidak bisa mendekat.",
+                question: "Jenis lensa apa yang diperlukan?",
+                options: [
+                    { text: "Telephoto", isCorrect: true },
+                    { text: "Wide Angle", isCorrect: false },
+                    { text: "Standard Prime", isCorrect: false },
+                    { text: "Tilt-Shift", isCorrect: false }
+                ],
+                explanation: "Lensa Telephoto (panjang fokus besar) berfungsi 'mendekatkan' objek yang jauh."
+            },
+
+            // --- KATEGORI: PENCAHAYAAN (LIGHTING) ---
+            {
+                scenario: "Anda memotret model di luar ruangan saat siang bolong (matahari tepat di atas). Muncul bayangan gelap di bawah mata (mata panda).",
+                question: "Alat sederhana apa yang bisa memantulkan cahaya untuk mengisi bayangan tersebut?",
+                options: [
+                    { text: "Reflector", isCorrect: true },
+                    { text: "Tripod", isCorrect: false },
+                    { text: "Filter ND", isCorrect: false },
+                    { text: "Lens Hood", isCorrect: false }
+                ],
+                explanation: "Reflector digunakan untuk memantulkan cahaya matahari ke area bayangan (fill light) pada wajah model."
+            },
+            {
+                scenario: "Hasil foto interior ruangan terlihat sangat kuning karena menggunakan lampu bohlam pijar.",
+                question: "Setting White Balance (WB) apa yang harus dipilih untuk menetralkannya?",
+                options: [
+                    { text: "Tungsten / Incandescent", isCorrect: true },
+                    { text: "Cloudy", isCorrect: false },
+                    { text: "Shade", isCorrect: false },
+                    { text: "Flash", isCorrect: false }
+                ],
+                explanation: "Mode Tungsten (simbol lampu bohlam) menambahkan nuansa biru untuk mendinginkan warna kuning dari lampu pijar."
+            },
+            {
+                scenario: "Klien menginginkan foto potret dramatis dengan separuh wajah terang dan separuh gelap total (Split Lighting).",
+                question: "Di mana posisi sumber cahaya utama (Key Light) harus diletakkan?",
+                options: [
+                    { text: "90 derajat di samping model", isCorrect: true },
+                    { text: "45 derajat depan model", isCorrect: false },
+                    { text: "Tepat di depan wajah", isCorrect: false },
+                    { text: "Di belakang model", isCorrect: false }
+                ],
+                explanation: "Cahaya dari samping tegak lurus (90 derajat) akan menerangi satu sisi wajah dan membiarkan sisi lain gelap."
+            },
+            {
+                scenario: "Anda menggunakan flash eksternal langsung diarahkan ke wajah objek, hasilnya kulit terlihat berminyak dan datar.",
+                question: "Teknik apa yang sebaiknya dilakukan dengan flash tersebut?",
+                options: [
+                    { text: "Bouncing (Pantulkan ke plafon)", isCorrect: true },
+                    { text: "Direct Flash (Tembak langsung)", isCorrect: false },
+                    { text: "Matikan Flash", isCorrect: false },
+                    { text: "Zoom Flash", isCorrect: false }
+                ],
+                explanation: "Memantulkan flash ke langit-langit (Bouncing) akan memperluas sumber cahaya sehingga jatuhnya lebih lembut di wajah."
+            },
+
+            // --- KATEGORI: KOMPOSISI ---
+            {
+                scenario: "Anda memotret jalan raya panjang yang lurus menuju gunung di kejauhan.",
+                question: "Garis jalan raya tersebut dalam fotografi disebut sebagai?",
+                options: [
+                    { text: "Leading Lines", isCorrect: true },
+                    { text: "Framing", isCorrect: false },
+                    { text: "Rule of Thirds", isCorrect: false },
+                    { text: "Golden Spiral", isCorrect: false }
+                ],
+                explanation: "Leading Lines adalah garis dalam komposisi yang menuntun mata pemirsa menuju subjek utama (gunung)."
+            },
+            {
+                scenario: "Memotret refleksi bangunan pada genangan air untuk menghasilkan gambar yang sama persis atas dan bawah.",
+                question: "Prinsip komposisi apa yang dominan di sini?",
+                options: [
+                    { text: "Simetri (Symmetry)", isCorrect: true },
+                    { text: "Rule of Thirds", isCorrect: false },
+                    { text: "Diagonal", isCorrect: false },
+                    { text: "Panning", isCorrect: false }
+                ],
+                explanation: "Simetri menekankan pada keseimbangan yang sama rata antara sisi kiri-kanan atau atas-bawah."
+            },
+            {
+                scenario: "Saat memotret anak kecil yang sedang bermain di lantai.",
+                question: "Angle (sudut pandang) mana yang paling disarankan untuk hasil yang engage?",
+                options: [
+                    { text: "Eye Level (Sejajar mata anak)", isCorrect: true },
+                    { text: "High Angle (Dari atas berdiri)", isCorrect: false },
+                    { text: "Bird Eye View", isCorrect: false },
+                    { text: "Frog Eye (Dari bawah sekali)", isCorrect: false }
+                ],
+                explanation: "Memotret sejajar dengan mata subjek (Eye Level) menciptakan kedekatan emosional dan proporsi yang wajar."
+            },
+            {
+                scenario: "Anda memotret pemandangan laut. Ada sebuah kapal nelayan kecil.",
+                question: "Menurut Rule of Thirds, di mana posisi terbaik meletakkan kapal?",
+                options: [
+                    { text: "Di titik persimpangan garis grid", isCorrect: true },
+                    { text: "Tepat di tengah frame", isCorrect: false },
+                    { text: "Di pojok paling pinggir", isCorrect: false },
+                    { text: "Di luar frame", isCorrect: false }
+                ],
+                explanation: "Rule of Thirds menyarankan menempatkan Point of Interest (POI) di persimpangan garis grid agar komposisi dinamis."
+            },
+
+            // --- KATEGORI: TEKNIS FILE & EDITING ---
+            {
+                scenario: "Klien meminta file mentah agar editor mereka bisa leluasa mengoreksi White Balance dan Exposure nanti.",
+                question: "Format file apa yang Anda berikan?",
+                options: [
+                    { text: "RAW", isCorrect: true },
+                    { text: "JPEG", isCorrect: false },
+                    { text: "PNG", isCorrect: false },
+                    { text: "GIF", isCorrect: false }
+                ],
+                explanation: "File RAW menyimpan semua data sensor tanpa kompresi, memungkinkan pengubahan WB dan Exposure ekstrem pasca-pemotretan."
+            },
+            {
+                scenario: "Anda mencetak foto ukuran baliho besar, tapi hasilnya pecah (pixelated).",
+                question: "Apa penyebab teknis utamanya?",
+                options: [
+                    { text: "Resolusi (Megapixel) terlalu rendah", isCorrect: true },
+                    { text: "Warna terlalu saturasi", isCorrect: false },
+                    { text: "Shutter speed terlalu cepat", isCorrect: false },
+                    { text: "ISO terlalu rendah", isCorrect: false }
+                ],
+                explanation: "Untuk cetak ukuran besar, dibutuhkan resolusi (jumlah piksel) yang tinggi. Jika resolusi rendah ditarik besar, gambar pecah."
+            },
+            {
+                scenario: "Di Photoshop, Anda ingin menggelapkan area langit saja tanpa mempengaruhi area tanah.",
+                question: "Tool apa yang digunakan untuk 'membakar' (menggelapkan) area spesifik?",
+                options: [
+                    { text: "Burn Tool", isCorrect: true },
+                    { text: "Dodge Tool", isCorrect: false },
+                    { text: "Blur Tool", isCorrect: false },
+                    { text: "Clone Stamp", isCorrect: false }
+                ],
+                explanation: "Burn Tool digunakan untuk menggelapkan area spesifik (seperti teknik burning di kamar gelap analog)."
+            },
+            {
+                scenario: "Anda perlu menghapus jerawat pada wajah model di Photoshop secara rapi.",
+                question: "Tool apa yang paling efisien?",
+                options: [
+                    { text: "Spot Healing Brush", isCorrect: true },
+                    { text: "Eraser Tool", isCorrect: false },
+                    { text: "Gradient Tool", isCorrect: false },
+                    { text: "Magic Wand", isCorrect: false }
+                ],
+                explanation: "Spot Healing Brush secara otomatis mengambil sampel tekstur sekitar untuk menutupi noda (jerawat) dengan mulus."
+            },
+
+             // --- VARIASI TAMBAHAN (AGAR JUMLAH BANYAK) ---
+            {
+                scenario: "Memotret air mancur di taman kota agar butiran airnya terlihat tajam membeku di udara.",
+                question: "Shutter speed minimal yang disarankan?",
+                options: [
+                    { text: "1/500 sec", isCorrect: true },
+                    { text: "1/2 sec", isCorrect: false },
+                    { text: "1/15 sec", isCorrect: false },
+                    { text: "10 sec", isCorrect: false }
+                ],
+                explanation: "Butiran air bergerak cepat, butuh shutter speed tinggi."
+            },
+            {
+                scenario: "Foto panning mobil balap. Mobil tajam, tapi background bergaris (motion blur).",
+                question: "Bagaimana gerakan kamera Anda saat memotret?",
+                options: [
+                    { text: "Mengikuti arah gerak mobil", isCorrect: true },
+                    { text: "Diam di tempat (Statis)", isCorrect: false },
+                    { text: "Berlawanan arah mobil", isCorrect: false },
+                    { text: "Zoom in cepat", isCorrect: false }
+                ],
+                explanation: "Teknik Panning mengharuskan kamera bergerak mengikuti subjek dengan shutter speed agak lambat (1/30 - 1/60)."
+            },
+            {
+                scenario: "Memotret bulan purnama agar terlihat detail kawahnya.",
+                question: "Kesalahan umum pemula adalah foto bulan jadi bola putih terang polos. Solusinya?",
+                options: [
+                    { text: "Gunakan Spot Metering pada bulan", isCorrect: true },
+                    { text: "Gunakan Flash", isCorrect: false },
+                    { text: "Naikkan ISO ke 6400", isCorrect: false },
+                    { text: "Buka Aperture selebar mungkin", isCorrect: false }
+                ],
+                explanation: "Bulan itu sangat terang (terkena matahari). Metering rata-rata akan membuat kamera 'tertipu' oleh langit gelap, sehingga bulan overexposed."
+            },
+            {
+                scenario: "Anda memotret makanan untuk Instagram. Agar warna makanan terlihat menggugah selera (hangat/warm).",
+                question: "Hindari White Balance yang cenderung?",
+                options: [
+                    { text: "Biru (Cool)", isCorrect: true },
+                    { text: "Kuning", isCorrect: false },
+                    { text: "Oranye", isCorrect: false },
+                    { text: "Merah", isCorrect: false }
+                ],
+                explanation: "Warna kebiruan pada makanan membuatnya terlihat basi atau tidak selera. Warna hangat lebih disukai untuk makanan."
+            },
+            {
+                scenario: "Kamera DSLR Anda memiliki mode 'A' atau 'Av'.",
+                question: "Apa fungsi utama mode ini?",
+                options: [
+                    { text: "Anda atur Aperture, kamera atur Shutter", isCorrect: true },
+                    { text: "Anda atur Shutter, kamera atur Aperture", isCorrect: false },
+                    { text: "Semua otomatis", isCorrect: false },
+                    { text: "Mode Manual penuh", isCorrect: false }
+                ],
+                explanation: "Av (Aperture Value) adalah mode semi-otomatis prioritas bukaan."
+            },
+            {
+                scenario: "Dalam histogram, grafik menumpuk di sebelah kiri dan kosong di kanan.",
+                question: "Ini menandakan foto mengalami?",
+                options: [
+                    { text: "Underexposure (Gelap)", isCorrect: true },
+                    { text: "Overexposure (Terang)", isCorrect: false },
+                    { text: "Kontras Rendah", isCorrect: false },
+                    { text: "White Balance salah", isCorrect: false }
+                ],
+                explanation: "Kiri histogram mewakili area gelap/shadow. Jika menumpuk di kiri, foto terlalu gelap."
+            },
+            {
+                scenario: "Fungsi tombol 'Half-Press' (tekan setengah) pada tombol shutter adalah untuk?",
+                question: "Apa yang terjadi saat ditekan setengah?",
+                options: [
+                    { text: "Mengunci Fokus & Exposure", isCorrect: true },
+                    { text: "Mengambil foto langsung", isCorrect: false },
+                    { text: "Menyalakan kamera", isCorrect: false },
+                    { text: "Membuka menu", isCorrect: false }
+                ],
+                explanation: "Tekan setengah mengaktifkan auto-focus dan metering sebelum gambar diambil."
+            },
+            {
+                scenario: "Anda memotret landscape dengan lensa f/22. Namun hasil foto justru kurang tajam dibanding f/11.",
+                question: "Fenomena penurunan ketajaman pada bukaan sangat kecil ini disebut?",
+                options: [
+                    { text: "Difraksi (Diffraction)", isCorrect: true },
+                    { text: "Distorsi", isCorrect: false },
+                    { text: "Vignetting", isCorrect: false },
+                    { text: "Chromatic Aberration", isCorrect: false }
+                ],
+                explanation: "Difraksi terjadi saat cahaya melewati lubang yang sangat kecil (f/22 ke atas), mengurangi ketajaman gambar."
+            },
+            {
+                scenario: "Saat merekam video dengan DSLR, shutter speed ideal adalah?",
+                question: "Rumus umum shutter speed untuk video?",
+                options: [
+                    { text: "Dua kali frame rate (1/50 utk 24fps)", isCorrect: true },
+                    { text: "Sama dengan frame rate", isCorrect: false },
+                    { text: "Secepat mungkin", isCorrect: false },
+                    { text: "Selalu 1/1000", isCorrect: false }
+                ],
+                explanation: "180 degree shutter rule: Shutter speed harus 2x frame rate untuk motion blur yang natural."
+            },
+            {
+                scenario: "Lensa 50mm f/1.8 sering disebut sebagai?",
+                question: "Istilah populernya adalah?",
+                options: [
+                    { text: "Nifty Fifty", isCorrect: true },
+                    { text: "Kit Lens", isCorrect: false },
+                    { text: "Wide Lens", isCorrect: false },
+                    { text: "Zoom Lens", isCorrect: false }
+                ],
+                explanation: "Nifty Fifty adalah julukan lensa 50mm yang murah namun tajam dan bukaan besar."
+            }
+            // ... (Untuk mencapai 100, Anda bisa copy format di atas dan ganti teksnya)
+        ];
+
+        // --- LOGIC GAME ENGINE ---
+        
+        const game = {
+            score: 0,
+            currentQuestionIndex: 0,
+            currentSessionQuestions: [], // Wadah untuk 10 soal terpilih
+            answers: { correct: 0, wrong: 0 },
+            
+            elements: {
+                startScreen: document.getElementById('start-screen'),
+                gameScreen: document.getElementById('game-screen'),
+                resultScreen: document.getElementById('result-screen'),
+                scoreBoard: document.getElementById('score-board'),
+                currentScore: document.getElementById('current-score'),
+                qProgress: document.getElementById('q-progress'),
+                scenarioText: document.getElementById('scenario-text'),
+                questionText: document.getElementById('question-text'),
+                optionsContainer: document.getElementById('options-container'),
+                feedbackOverlay: document.getElementById('feedback-overlay'),
+                feedbackTitle: document.getElementById('feedback-title'),
+                feedbackDesc: document.getElementById('feedback-desc'),
+                feedbackIcon: document.getElementById('feedback-icon'),
+                finalScore: document.getElementById('final-score'),
+                resultTitle: document.getElementById('result-title'),
+                resultDesc: document.getElementById('result-desc'),
+                progressRing: document.getElementById('progress-ring'),
+                totalCorrect: document.getElementById('total-correct'),
+                totalWrong: document.getElementById('total-wrong')
+            },
+
+            // Utility: Fisher-Yates Shuffle
+            shuffleArray: function(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            },
+
+            start: function() {
+                this.score = 0;
+                this.currentQuestionIndex = 0;
+                this.answers = { correct: 0, wrong: 0 };
+                
+                // 1. Acak seluruh bank soal
+                const shuffledBank = this.shuffleArray([...rawQuestionBank]);
+                
+                // 2. Ambil 10 soal pertama saja
+                this.currentSessionQuestions = shuffledBank.slice(0, 10);
+
+                this.elements.startScreen.classList.add('hidden');
+                this.elements.resultScreen.classList.add('hidden');
+                this.elements.gameScreen.classList.remove('hidden');
+                this.elements.scoreBoard.classList.remove('hidden');
+                
+                this.updateStats();
+                this.loadQuestion();
+            },
+
+            loadQuestion: function() {
+                const q = this.currentSessionQuestions[this.currentQuestionIndex];
+                const el = this.elements;
+
+                // Update UI Progress
+                el.qProgress.innerText = `${this.currentQuestionIndex + 1}/10`;
+                
+                // Animasi Text
+                el.scenarioText.parentElement.classList.remove('fade-in');
+                void el.scenarioText.parentElement.offsetWidth; 
+                el.scenarioText.parentElement.classList.add('fade-in');
+
+                // Set Teks
+                el.scenarioText.innerText = q.scenario;
+                el.questionText.innerHTML = `<i class="fa-solid fa-circle-question mt-1 mr-2"></i> ${q.question}`;
+                
+                // Render Options (Diacak juga urutan jawabannya)
+                el.optionsContainer.innerHTML = '';
+                
+                // Clone options agar tidak merusak data asli, lalu acak
+                const currentOptions = this.shuffleArray([...q.options]);
+
+                currentOptions.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = "w-full p-4 text-left bg-slate-700 hover:bg-slate-600 border border-slate-600 rounded-xl transition-all flex items-center group relative overflow-hidden";
+                    
+                    // Cek jawaban saat klik
+                    btn.onclick = () => this.checkAnswer(opt.isCorrect, q.explanation);
+                    
+                    // Huruf A, B, C, D
+                    const letters = ['A', 'B', 'C', 'D'];
+                    
+                    btn.innerHTML = `
+                        <div class="absolute left-0 top-0 bottom-0 w-1 bg-transparent group-hover:bg-blue-500 transition-colors"></div>
+                        <span class="w-8 h-8 rounded-full bg-slate-800 text-slate-400 flex items-center justify-center text-sm font-bold mr-4 group-hover:bg-blue-500 group-hover:text-white transition-colors shadow-md">
+                            ${letters[index]}
+                        </span>
+                        <span class="text-slate-200 font-medium text-sm md:text-base">${opt.text}</span>
+                    `;
+                    el.optionsContainer.appendChild(btn);
+                });
+            },
+
+            checkAnswer: function(isCorrect, explanation) {
+                if (isCorrect) {
+                    this.score += 10;
+                    this.answers.correct++;
+                    this.showFeedback(true, explanation);
+                } else {
+                    this.answers.wrong++;
+                    this.showFeedback(false, explanation);
+                }
+                this.updateStats();
+            },
+
+            showFeedback: function(isCorrect, explanation) {
+                const el = this.elements;
+                el.feedbackOverlay.classList.remove('hidden');
+                
+                if (isCorrect) {
+                    el.feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-check text-green-500 bounce"></i>';
+                    el.feedbackTitle.innerText = "Tepat Sekali!";
+                    el.feedbackTitle.className = "text-2xl font-bold text-green-400 mb-2";
+                } else {
+                    el.feedbackIcon.innerHTML = '<i class="fa-solid fa-circle-xmark text-red-500 shake"></i>';
+                    el.feedbackTitle.innerText = "Kurang Tepat";
+                    el.feedbackTitle.className = "text-2xl font-bold text-red-400 mb-2";
+                }
+                el.feedbackDesc.innerText = explanation;
+            },
+
+            nextQuestion: function() {
+                this.elements.feedbackOverlay.classList.add('hidden');
+                this.currentQuestionIndex++;
+
+                if (this.currentQuestionIndex < 10) {
+                    this.loadQuestion();
+                } else {
+                    this.endGame();
+                }
+            },
+
+            updateStats: function() {
+                this.elements.currentScore.innerText = this.score;
+            },
+
+            endGame: function() {
+                this.elements.gameScreen.classList.add('hidden');
+                this.elements.scoreBoard.classList.add('hidden');
+                this.elements.resultScreen.classList.remove('hidden');
+
+                const el = this.elements;
+                // Score maksimal 100 (10 soal x 10 poin)
+                const percentage = this.score; 
+                
+                el.finalScore.innerText = this.score;
+                el.totalCorrect.innerText = this.answers.correct;
+                el.totalWrong.innerText = this.answers.wrong;
+
+                // Animasi Ring
+                const circle = el.progressRing;
+                const radius = circle.r.baseVal.value;
+                const circumference = radius * 2 * Math.PI;
+                const offset = circumference - (percentage / 100) * circumference;
+                
+                circle.style.strokeDashoffset = circumference;
+                setTimeout(() => {
+                    circle.style.strokeDashoffset = offset;
+                }, 100);
+
+                // Judul Hasil
+                if (percentage >= 80) {
+                    el.resultTitle.innerText = "Professional Photographer!";
+                    el.resultTitle.className = "text-2xl font-bold text-blue-400 mb-2";
+                    el.resultDesc.innerText = "Analisa Anda tajam. Anda siap menangani klien nyata.";
+                } else if (percentage >= 60) {
+                    el.resultTitle.innerText = "Asisten Fotografer";
+                    el.resultTitle.className = "text-2xl font-bold text-yellow-400 mb-2";
+                    el.resultDesc.innerText = "Pemahaman dasar sudah baik, tingkatkan jam terbang.";
+                } else {
+                    el.resultTitle.innerText = "Trainee / Pemula";
+                    el.resultTitle.className = "text-2xl font-bold text-red-400 mb-2";
+                    el.resultDesc.innerText = "Perbanyak latihan studi kasus dan pelajari segitiga eksposur lagi.";
+                }
+            }
+        };
+    </script>
+</body>
+</html>
